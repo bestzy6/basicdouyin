@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
+//实例
+
 // User 用户模型
 type User struct {
 	gorm.Model

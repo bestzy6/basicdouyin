@@ -41,18 +41,6 @@ func NewRouter() *gin.Engine {
 
 		//以下是脚手架自带,供参考，之后会删除
 		v1.POST("ping", api.Ping)
-		// 用户登录
-		v1.POST("user/register", api.UserRegister)
-		// 用户登录
-		v1.POST("user/login", api.UserLogin)
-		// 需要登录保护的
-		auth := v1.Group("")
-		auth.Use(middleware.AuthRequired())
-		{
-			// User Routing
-			auth.GET("user/me", api.UserMe)
-			auth.DELETE("user/logout", api.UserLogout)
-		}
 	}
 	return r
 }
