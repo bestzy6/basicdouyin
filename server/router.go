@@ -35,9 +35,9 @@ func NewRouter() *gin.Engine {
 		v1.GET("/comment/list", api.Ping)     //评论列表
 
 		//拓展接口2
-		v1.POST("/relation/action", api.Ping)       //关注操作
-		v1.GET("/relation/follow/list", api.Ping)   //关注列表
-		v1.GET("/relation/follower/list", api.Ping) //粉丝列表
+		v1.POST("/relation/action", api.FollowAction)       //关注操作
+		v1.GET("/relation/follow/list", api.GetFollowers)   //关注列表
+		v1.GET("/relation/follower/list", api.GetFollowees) //粉丝列表
 
 		//以下是脚手架自带,供参考，之后会删除
 		v1.POST("ping", api.Ping)

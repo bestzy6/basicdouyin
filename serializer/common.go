@@ -1,13 +1,12 @@
 package serializer
 
 // ErrNo 错误代码
-type ErrNo int
+type ErrNo uint8
 
 const (
 	OK             ErrNo = iota //正常
 	ParamInvalid                // 参数不合法
 	UserHasExisted              // 用户已存在
-	UserHasDeleted              // 用户已删除
 	UserNotExisted              // 用户不存在
 	WrongPassword               // 密码错误
 	LoginRequired               // 用户未登录
