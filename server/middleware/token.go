@@ -9,19 +9,16 @@ var jwtSecret = "nwpu418"
 
 type UserClaims struct {
 	*jwt.RegisteredClaims
-	//也许都不需要UserName
-	UserID   int
-	UserName string
+	UserID int
 }
 
-func CreateToken(userID int, userName string) (string, error) {
+func CreateToken(userID int) (string, error) {
 	expiresTime := jwt.NumericDate{Time: time.Now().Add(time.Hour * 10)}
 	userClaims := &UserClaims{
 		RegisteredClaims: &jwt.RegisteredClaims{
 			ExpiresAt: &expiresTime,
 		},
-		UserID:   userID,
-		UserName: userName,
+		UserID: userID,
 	}
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodRS256, userClaims)
 	return tokenClaims.SignedString(jwtSecret)
