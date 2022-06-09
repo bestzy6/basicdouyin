@@ -24,6 +24,8 @@ func FollowAction(c *gin.Context) {
 		})
 		return
 	}
+	reqUserId, _ := c.Get("userid")
+	req.ReqUserId = reqUserId.(int)
 	resp := service.FollowService(&req)
 	c.JSON(http.StatusOK, resp)
 }
@@ -38,6 +40,8 @@ func GetFollowers(c *gin.Context) {
 		})
 		return
 	}
+	reqUserId, _ := c.Get("userid")
+	req.ReqUserId = reqUserId.(int)
 	resp := service.FollowersService(&req)
 	c.JSON(http.StatusOK, resp)
 }
@@ -52,6 +56,8 @@ func GetFollowees(c *gin.Context) {
 		})
 		return
 	}
+	reqUserId, _ := c.Get("userid")
+	req.ReqUserId = reqUserId.(int)
 	resp := service.FolloweesService(&req)
 	c.JSON(http.StatusOK, resp)
 }
