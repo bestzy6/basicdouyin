@@ -13,7 +13,4 @@ require (
 	gorm.io/gorm v1.21.10
 )
 
-require (
-	github.com/neo4j/neo4j-go-driver/v4 v4.4.3 // indirect
-	github.com/onsi/gomega v1.16.0 // indirect
-)
+require github.com/neo4j/neo4j-go-driver/v4 v4.4.3
