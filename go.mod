@@ -14,7 +14,6 @@ require (
 )
 
 require (
-	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.3 // indirect
 	github.com/onsi/gomega v1.16.0 // indirect
 )

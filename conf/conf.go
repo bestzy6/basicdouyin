@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"basictiktok/cache"
 	"basictiktok/model"
 	"basictiktok/util"
 	"os"
@@ -19,5 +18,5 @@ func Init() {
 
 	// 连接数据库
 	model.Database(os.Getenv("MYSQL_DSN"))
-	cache.Redis()
+	//cache.Redis()
 }
