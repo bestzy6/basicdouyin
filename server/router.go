@@ -2,9 +2,6 @@ package server
 
 import (
 	"basictiktok/api"
-	"basictiktok/server/middleware"
-	"os"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,9 +10,9 @@ func NewRouter() *gin.Engine {
 	r := gin.Default()
 
 	// 中间件, 顺序不能改（此处中间件是gin中间件）
-	r.Use(middleware.Session(os.Getenv("SESSION_SECRET")))
-	r.Use(middleware.Cors())
-	r.Use(middleware.CurrentUser())
+	//r.Use(middleware.Session(os.Getenv("SESSION_SECRET")))
+	//r.Use(middleware.Cors())
+	//r.Use(middleware.CurrentUser())
 
 	// 路由
 	v1 := r.Group("/douyin")
@@ -29,18 +26,16 @@ func NewRouter() *gin.Engine {
 		v1.GET("/publish/list", api.Ping)    //发布列表
 
 		//拓展接口1
-		v1.POST("/favorite/action", api.Ping) //赞操作
-		v1.GET("/favorite/list", api.Ping)    //点赞列表
-		v1.POST("/comment/action", api.Ping)  //评论操作
-		v1.GET("/comment/list", api.Ping)     //评论列表
+		v1.POST("/favorite/action", api.FavoritePost) //赞操作
+		v1.GET("/favorite/list", api.FavoriteList)    //点赞列表
+		v1.POST("/comment/action", api.CommentPost)   //评论操作
+		v1.GET("/comment/list", api.CommentList)      //评论列表
 
 		//拓展接口2
 		v1.POST("/relation/action", api.FollowAction)       //关注操作
 		v1.GET("/relation/follow/list", api.GetFollowers)   //关注列表
 		v1.GET("/relation/follower/list", api.GetFollowees) //粉丝列表
 
-		//以下是脚手架自带,供参考，之后会删除
-		v1.POST("ping", api.Ping)
 	}
 	return r
 }
