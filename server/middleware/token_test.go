@@ -6,7 +6,7 @@ import (
 )
 
 func TestCreateToken(t *testing.T) {
-	token, err := CreateToken(6666)
+	token, err := CreateToken(100)
 	if err != nil {
 		t.Error("err", err)
 		return
