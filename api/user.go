@@ -8,7 +8,7 @@ import (
 )
 
 // 用户注册
-func Register(c *gin.Context){
+func Register(c *gin.Context) {
 	var req serializer.RegisterRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusOK, serializer.RegisterResponse{
@@ -18,11 +18,11 @@ func Register(c *gin.Context){
 		return
 	}
 	resp := service.RegisterService(&req)
-	c.JSON(http.StatusOK,resp)
+	c.JSON(http.StatusOK, resp)
 }
 
 // 用户登录
-func Login(c *gin.Context){
+func Login(c *gin.Context) {
 	var req serializer.LoginRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusOK, serializer.RegisterResponse{
@@ -32,11 +32,11 @@ func Login(c *gin.Context){
 		return
 	}
 	resp := service.LoginService(&req)
-	c.JSON(http.StatusOK,resp)
+	c.JSON(http.StatusOK, resp)
 }
 
 // 查询用户信息
-func QueryUserInfo(c *gin.Context)  {
+func QueryUserInfo(c *gin.Context) {
 	var req serializer.UserInfoRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusOK, serializer.RegisterResponse{
@@ -46,5 +46,5 @@ func QueryUserInfo(c *gin.Context)  {
 		return
 	}
 	resp := service.QueryUserInfoService(&req)
-	c.JSON(http.StatusOK,resp)
+	c.JSON(http.StatusOK, resp)
 }

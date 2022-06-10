@@ -13,4 +13,8 @@ require (
 	gorm.io/gorm v1.21.10
 )
 
-require github.com/neo4j/neo4j-go-driver/v4 v4.4.3
+require (
+	github.com/Valiben/gin_unit_test v0.0.0-20181205064931-674aee46d090
+	github.com/golang-jwt/jwt/v4 v4.4.1
+	github.com/neo4j/neo4j-go-driver/v4 v4.4.3
+)
