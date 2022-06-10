@@ -114,5 +114,11 @@ func toSeriaUsers(users map[int]*graphdb.User) []serializer.User {
 
 // 将graph.User转换为model.User
 func toModelUser(user *graphdb.User) *model.User {
-	return nil
+	ansUser := model.User{
+		ID:            user.ID,
+		UserName:      user.Name,
+		FollowCount:   int64(user.FollowCount),
+		FollowerCount: int64(user.FollowerCount),
+	}
+	return &ansUser
 }
