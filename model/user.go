@@ -10,13 +10,13 @@ import (
 // User 用户模型
 type User struct {
 	gorm.Model
-	UserName       string						//用户名
-	PasswordDigest string	// 用户密码
-	Nickname       string	// 用户昵称
-	Status         string	// 用户状态
-	Avatar         string `gorm:"size:1000"`	// 用户头像
-	FollowCount    int64     // 关注总数
-	FollowerCount  int64   // 粉丝总数
+	UserName       string //用户名
+	PasswordDigest string // 用户密码
+	Nickname       string // 用户昵称
+	Status         string // 用户状态
+	Avatar         string `gorm:"size:1000"` // 用户头像
+	FollowCount    int64  // 关注总数
+	FollowerCount  int64  // 粉丝总数
 }
 
 const (
@@ -30,15 +30,14 @@ const (
 	Suspend string = "suspend"
 )
 
-
 // 创建一个新用户
-func CreateAUser(user *User)(err error){
+func CreateAUser(user *User) (err error) {
 	err = DB.Create(&user).Error
 	return
 }
 
 // 通过用户名查询用户信息
-func QueryAUser(username string)(user *User,err error)  {
+func QueryAUser(username string) (user *User, err error) {
 	user = new(User)
 	if err = DB.Debug().Where("username=?", username).Find(user).Error; err != nil {
 		return nil, err
@@ -47,9 +46,9 @@ func QueryAUser(username string)(user *User,err error)  {
 }
 
 // 通过用户id查询用户信息
-func QueryUser(id int64)(User,error){
+func QueryUser(id int64) (User, error) {
 	var user User
-	result := DB.First(&user,id)
+	result := DB.First(&user, id)
 	return user, result.Error
 }
 
@@ -74,4 +73,24 @@ func (user *User) SetPassword(password string) error {
 func (user *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordDigest), []byte(password))
 	return err == nil
+}
+
+// IncreFollow 关注数+1
+func (user *User) IncreFollow() {
+	DB.Where("")
+}
+
+// DecreFollow 关注数-1
+func (user *User) DecreFollow() {
+
+}
+
+// IncreFollowee 粉丝数+1
+func (user *User) IncreFollowee() {
+
+}
+
+// DecreFollowee 粉丝数-1
+func (user *User) DecreFollowee() {
+
 }
