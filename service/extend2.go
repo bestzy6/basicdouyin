@@ -10,12 +10,23 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	var resp serializer.FollowResponse
 	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
 	targetUser := graphdb.User{ID: req.ToUserId}
-	var err error
-	if req.ActionType == 1 {
-		err = user.Follow(&targetUser)
-	} else {
-		err = user.UnFollow(&targetUser)
+	err := user.Follow(&targetUser)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
 	}
+	resp.StatusCode = serializer.OK
+	resp.StatusMsg = "ok"
+	return &resp
+}
+
+// UnFollowService 取消关注服务
+func UnFollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
+	var resp serializer.FollowResponse
+	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
+	targetUser := graphdb.User{ID: req.ToUserId}
+	err := user.UnFollow(&targetUser)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
