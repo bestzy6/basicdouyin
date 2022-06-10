@@ -2,6 +2,7 @@ package model
 
 import (
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 //实例
@@ -28,6 +29,7 @@ const (
 	// Suspend 被封禁用户
 	Suspend string = "suspend"
 )
+
 
 // 创建一个新用户
 func CreateAUser(user *User) (err error) {
@@ -72,4 +74,24 @@ func (user *User) SetPassword(password string) error {
 func (user *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordDigest), []byte(password))
 	return err == nil
+}
+
+// IncreFollow 关注数+1
+func (user *User) IncreFollow() {
+	DB.Where("")
+}
+
+// DecreFollow 关注数-1
+func (user *User) DecreFollow() {
+
+}
+
+// IncreFollowee 粉丝数+1
+func (user *User) IncreFollowee() {
+
+}
+
+// DecreFollowee 粉丝数-1
+func (user *User) DecreFollowee() {
+
 }
