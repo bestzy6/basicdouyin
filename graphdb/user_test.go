@@ -118,6 +118,22 @@ func TestUser_UnFollow(t *testing.T) {
 	}
 }
 
+func TestUser_HasFollow(t *testing.T) {
+	user1 := User{
+		ID:   100,
+		Name: "zy",
+	}
+	user2 := User{
+		ID:   101,
+		Name: "xj",
+	}
+	ok, err := user1.HasFollow(&user2)
+	if err != nil {
+		t.Errorf("err: %v", err)
+	}
+	fmt.Println(ok)
+}
+
 func TestUser_Followers(t *testing.T) {
 	user1 := User{
 		ID:   100,
