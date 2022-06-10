@@ -15,6 +15,7 @@ type User struct {
 	IsFollow      bool   // true-已关注，false-未关注
 }
 
+// Create 创建用户
 func (u User) Create() error {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -46,6 +47,7 @@ func (u User) Create() error {
 	return result.Err()
 }
 
+// Follow 关注用户，target的ID必填
 func (u User) Follow(target *User) error {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -102,6 +104,7 @@ func (u User) Follow(target *User) error {
 	return err
 }
 
+// UnFollow 取消关注，target的ID必填
 func (u User) UnFollow(target *User) error {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -162,7 +165,7 @@ func (u User) UnFollow(target *User) error {
 	return err
 }
 
-// Followers 关注列表
+// Followers 关注列表，requestor的ID必填
 func (u User) Followers(requestor *User) (map[int]*User, error) {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -215,7 +218,7 @@ func (u User) Followers(requestor *User) (map[int]*User, error) {
 	return users, err
 }
 
-// Followees 粉丝列表
+// Followees 粉丝列表，requestor的ID必填
 func (u User) Followees(requestor *User) (map[int]*User, error) {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -277,6 +280,36 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 		return nil, nil
 	})
 	return users, err
+}
+
+// HasFollow 判断是否关注，，target的ID必填，true为已关注，false为未关注
+func (u User) HasFollow(target *User) (bool, error) {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	result, err := session.Run(
+		"MATCH (a:Users{id:$AID})-[rel:follow]->(b:Users{id:$BID}) "+
+			"RETURN COUNT(rel)",
+		map[string]interface{}{
+			"AID": u.ID,
+			"BID": target.ID,
+		})
+	if err != nil {
+		util.Log().Error("HasFollow执行出错！", err)
+		return false, err
+	}
+	record, err := result.Single()
+	if err != nil {
+		util.Log().Error("HasFollow执行出错！", err)
+		return false, err
+	}
+	n, _ := record.Get("COUNT(rel)")
+	return n.(int64) > 0, nil
 }
 
 //记录转为user
