@@ -2,6 +2,7 @@ package service
 
 import (
 	"basictiktok/graphdb"
+	"basictiktok/model"
 	"basictiktok/serializer"
 )
 
@@ -62,7 +63,7 @@ func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListR
 		return &resp
 	}
 	//
-	resp.UserList = convertUtil(users)
+	resp.UserList = toSeriaUsers(users)
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = ""
 	return &resp
@@ -89,14 +90,14 @@ func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesRes
 		return &resp
 	}
 	//
-	resp.UserList = convertUtil(users)
+	resp.UserList = toSeriaUsers(users)
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = ""
 	return &resp
 }
 
 // 将DTO的users转换为VO的serializer.Users
-func convertUtil(users map[int]*graphdb.User) []serializer.User {
+func toSeriaUsers(users map[int]*graphdb.User) []serializer.User {
 	ansUsers := make([]serializer.User, 0, len(users))
 	for _, v := range users {
 		ansUser := serializer.User{
@@ -109,4 +110,9 @@ func convertUtil(users map[int]*graphdb.User) []serializer.User {
 		ansUsers = append(ansUsers, ansUser)
 	}
 	return ansUsers
+}
+
+// 将graph.User转换为model.User
+func toModelUser(user *graphdb.User) *model.User {
+	return nil
 }
