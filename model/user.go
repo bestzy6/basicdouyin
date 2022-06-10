@@ -9,7 +9,7 @@ import (
 // User 用户模型
 type User struct {
 	ID             int    `gorm:"column:id;AUTO_INCREMENT"`
-	UserName       string //用户名
+	UserName       string `gorm:"unique"` //用户名
 	PasswordDigest string // 用户密码
 	Nickname       string // 用户昵称
 	Status         string // 用户状态
