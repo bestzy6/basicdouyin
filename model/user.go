@@ -30,7 +30,6 @@ const (
 	Suspend string = "suspend"
 )
 
-
 // 创建一个新用户
 func CreateAUser(user *User) (err error) {
 	err = DB.Create(&user).Error
@@ -77,21 +76,25 @@ func (user *User) CheckPassword(password string) bool {
 }
 
 // IncreFollow 关注数+1
-func (user *User) IncreFollow() {
-	DB.Where("")
+func (user *User) IncreFollow() error {
+	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
+	return err
 }
 
 // DecreFollow 关注数-1
-func (user *User) DecreFollow() {
-
+func (user *User) DecreFollow() error {
+	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
+	return err
 }
 
 // IncreFollowee 粉丝数+1
-func (user *User) IncreFollowee() {
-
+func (user *User) IncreFollowee() error {
+	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follower_count + ?", 1)).Error
+	return err
 }
 
 // DecreFollowee 粉丝数-1
-func (user *User) DecreFollowee() {
-
+func (user *User) DecreFollowee() error {
+	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follower_count - ?", 1)).Error
+	return err
 }

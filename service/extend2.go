@@ -3,6 +3,7 @@ package service
 import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
+	"basictiktok/mq"
 	"basictiktok/serializer"
 )
 
@@ -20,7 +21,16 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	//以下操作异步修改数据库
-	//
+	msg1 := mq.G2mMessage{
+		User: toModelUser(&user),
+		Num:  mq.IncreFollower,
+	}
+	mq.ToModelUserMQ <- &msg1
+	msg2 := mq.G2mMessage{
+		User: toModelUser(&targetUser),
+		Num:  mq.IncreFollowee,
+	}
+	mq.ToModelUserMQ <- &msg2
 	return &resp
 }
 
@@ -38,7 +48,16 @@ func UnFollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	//以下操作异步修改数据库
-	//
+	msg1 := mq.G2mMessage{
+		User: toModelUser(&user),
+		Num:  mq.DecreFollower,
+	}
+	mq.ToModelUserMQ <- &msg1
+	msg2 := mq.G2mMessage{
+		User: toModelUser(&targetUser),
+		Num:  mq.DecreFollowee,
+	}
+	mq.ToModelUserMQ <- &msg2
 	return &resp
 }
 

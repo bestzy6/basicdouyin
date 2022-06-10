@@ -15,34 +15,33 @@ const (
 )
 
 type G2mMessage struct {
-	user     *model.User
-	operaNum OperaNum
+	User *model.User
+	Num  OperaNum
 }
 
 var (
-	toModelUserMQ chan *G2mMessage
+	ToModelUserMQ chan *G2mMessage
 )
 
 func InitMQ() {
-	toModelUserMQ = make(chan *G2mMessage, maxMessageNum)
+	ToModelUserMQ = make(chan *G2mMessage, maxMessageNum)
 	go listenToModelUserMQ()
 }
 
 func listenToModelUserMQ() {
-	var message *G2mMessage
+	var msg *G2mMessage
 	for {
-		message = <-toModelUserMQ
-		user := message.user
-		switch message.operaNum {
+		msg = <-ToModelUserMQ
+		user := msg.User
+		switch msg.Num {
 		case DecreFollower:
-
-			return
+			user.DecreFollow()
 		case IncreFollower:
-			return
+			user.IncreFollow()
 		case DecreFollowee:
-			return
+			user.DecreFollowee()
 		case IncreFollowee:
-			return
+			user.IncreFollowee()
 		}
 	}
 }
