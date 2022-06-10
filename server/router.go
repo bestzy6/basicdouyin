@@ -22,10 +22,10 @@ func NewRouter() *gin.Engine {
 
 		//基础接口
 		v1.GET("/feed", api.Ping)            //视频流接口
-		v1.POST("/user/register", api.Ping)  //用户注册
-		v1.POST("/user/login", api.Ping)     //用户登录
-		v1.GET("/user", api.Ping)            //用户信息
-		v1.POST("/publish/action", api.Ping) //投稿接口
+		v1.POST("/user/register", api.Register)  //用户注册
+		v1.POST("/user/login", api.Login)     //用户登录
+		v1.GET("/user", api.QueryUserInfo)            //用户信息
+		v1.POST("/publish/action", api.PublishVideo) //投稿接口
 		v1.GET("/publish/list", api.Ping)    //发布列表
 
 		//拓展接口1
