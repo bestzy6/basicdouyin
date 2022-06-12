@@ -12,8 +12,10 @@ func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse
 	var resp serializer.LikesResponse
 	vid := req.VideoId
 	commentNums, _ := model.NewVideoClDaoInstance().QueryByVideoId(int64(vid))
-	//vidObj, _ := model.QueryByVideoId(int64(vid))  等佳佳写完对接下
+
+	//vidObj, _ := model.QueryByVideoId(int64(vid)) //需要一个查询根据videoId 查询
 	//vidObj.FavoriteCount = commentNums.FavoriteCount
+
 	// 更新表的点赞总数
 	if req.ActionType == 1 { //点赞操作
 		fPost := model.FavoritePost{
@@ -40,12 +42,12 @@ func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListRe
 	favoritePostDao := model.NewFavoritePostDaoInstance()
 	videoPost, err := favoritePostDao.QueryFavoritePostById(int64(userId))
 	if err != nil {
-		util.Log().Error("点赞失败:", err)
+		util.Log().Error("获取点赞列表失败:", err)
 	}
 	videoLs := favoritePostDao.GetVideoIdList(videoPost)
 	results, err1 := favoritePostDao.QueryPostByUserId(videoLs) // 拿到所有相关的video 实体
 	if err1 != nil {
-		util.Log().Error("点赞失败:", err)
+		util.Log().Error("获取点赞列表失败:", err)
 	}
 	var videoTmpIndex []*serializer.Video
 	for _, result := range results {
@@ -65,4 +67,20 @@ func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListRe
 	resp.StatusMsg = "查询点赞列表成功"
 	resp.VideoList = videoTmpIndex
 	return &resp
+}
+
+// isFollow 获取用户点赞的视频
+func isFollow(userId, videoId int64) bool {
+	newFPO := model.NewFavoritePostDaoInstance()
+	tmp, err := newFPO.QueryFavoritePostById(userId)
+	if err != nil {
+		util.Log().Error("获取点赞视频失败:", err)
+	}
+	videoLs := newFPO.GetVideoIdList(tmp)
+	for _, v := range videoLs {
+		if v == videoId {
+			return true
+		}
+	}
+	return false
 }
