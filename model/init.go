@@ -2,16 +2,14 @@ package model
 
 import (
 	"basictiktok/util"
-	"log"
-	"os"
-	"time"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"log"
+	"os"
+	"time"
 )
 
-// DB 数据库链接单例
 var DB *gorm.DB
 
 // Database 在中间件中初始化mysql链接
