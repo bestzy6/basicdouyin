@@ -2,6 +2,7 @@ package model
 
 import (
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 //实例
@@ -72,4 +73,50 @@ func (user *User) SetPassword(password string) error {
 func (user *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err == nil
+}
+
+// Follow 关注
+func (user *User) Follow(toUser *User) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		tx.Begin()
+		err := tx.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		err = DB.Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		tx.Commit()
+		return nil
+	})
+	return err
+}
+
+// UnFollow 取消关注
+func (user *User) UnFollow(toUser *User) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		tx.Begin()
+		err := tx.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		err = tx.Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count - ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		tx.Commit()
+		return nil
+	})
+	return err
+}
+
+// DecreFollowee 粉丝数-1
+func (user *User) DecreFollowee() error {
+	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follower_count - ?", 1)).Error
+	return err
 }

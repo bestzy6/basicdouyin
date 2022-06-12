@@ -2,20 +2,17 @@ package service
 
 import (
 	"basictiktok/graphdb"
+	"basictiktok/model"
+	"basictiktok/mq"
 	"basictiktok/serializer"
 )
 
-// FollowService 关注服务（还需要添加对数据库的操作）
+// FollowService 关注服务
 func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	var resp serializer.FollowResponse
-	user := graphdb.User{ID: 1} //需要根据token修改
+	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
 	targetUser := graphdb.User{ID: req.ToUserId}
-	var err error
-	if req.ActionType == 1 {
-		err = user.Follow(&targetUser)
-	} else {
-		err = user.UnFollow(&targetUser)
-	}
+	err := user.Follow(&targetUser)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -23,15 +20,53 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
+	//以下操作异步修改数据库
+	msg := mq.G2mMessage{
+		User:   toModelUser(&user),
+		ToUser: toModelUser(&targetUser),
+		Num:    mq.Follow,
+	}
+	mq.ToModelUserMQ <- &msg
+	return &resp
+}
+
+// UnFollowService 取消关注服务
+func UnFollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
+	var resp serializer.FollowResponse
+	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
+	targetUser := graphdb.User{ID: req.ToUserId}
+	err := user.UnFollow(&targetUser)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
+	resp.StatusCode = serializer.OK
+	resp.StatusMsg = "ok"
+	//以下操作异步修改数据库
+	msg := mq.G2mMessage{
+		User:   toModelUser(&user),
+		ToUser: toModelUser(&targetUser),
+		Num:    mq.UnFollow,
+	}
+	mq.ToModelUserMQ <- &msg
 	return &resp
 }
 
 // FollowersService 获取关注列表服务
 func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListResponse {
-	var resp serializer.FollowListResponse
-	reqUser := graphdb.User{ID: 1} //需要根据token修改
+	var (
+		resp  serializer.FollowListResponse
+		users map[int]*graphdb.User
+		err   error
+	)
 	user := graphdb.User{ID: req.UserId}
-	users, err := user.Followers(&reqUser)
+	if req.UserId == req.ReqUserId {
+		users, err = user.MyFollowers()
+	} else {
+		reqUser := graphdb.User{ID: req.ReqUserId} //需要根据token修改
+		users, err = user.Followers(&reqUser)
+	}
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -39,18 +74,7 @@ func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListR
 		return &resp
 	}
 	//
-	ansUsers := make([]serializer.User, len(users))
-	for i := 0; i < len(users); i++ {
-		ansUser := serializer.User{
-			ID:            int64(users[i].ID),
-			Name:          users[i].Name,
-			FollowCount:   int64(users[i].FollowCount),
-			FollowerCount: int64(users[i].FollowerCount),
-			IsFollow:      users[i].IsFollow,
-		}
-		ansUsers[i] = ansUser
-	}
-	resp.UserList = ansUsers
+	resp.UserList = toSeriaUsers(users)
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = ""
 	return &resp
@@ -58,10 +82,18 @@ func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListR
 
 // FolloweesService 获取粉丝列表服务
 func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesResponse {
-	var resp serializer.FolloweesResponse
-	reqUser := graphdb.User{ID: 1} //需要根据token修改
+	var (
+		resp  serializer.FolloweesResponse
+		users map[int]*graphdb.User
+		err   error
+	)
 	user := graphdb.User{ID: req.UserId}
-	users, err := user.Followees(&reqUser)
+	if req.UserId == req.ReqUserId {
+		users, err = user.MyFollowees()
+	} else {
+		reqUser := graphdb.User{ID: req.UserId} //需要根据token修改
+		users, err = user.Followees(&reqUser)
+	}
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -69,19 +101,35 @@ func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesRes
 		return &resp
 	}
 	//
-	ansUsers := make([]serializer.User, len(users))
-	for i := 0; i < len(users); i++ {
-		ansUser := serializer.User{
-			ID:            int64(users[i].ID),
-			Name:          users[i].Name,
-			FollowCount:   int64(users[i].FollowCount),
-			FollowerCount: int64(users[i].FollowerCount),
-			IsFollow:      users[i].IsFollow,
-		}
-		ansUsers[i] = ansUser
-	}
-	resp.UserList = ansUsers
+	resp.UserList = toSeriaUsers(users)
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = ""
 	return &resp
+}
+
+// 将DTO的users转换为VO的serializer.Users
+func toSeriaUsers(users map[int]*graphdb.User) []serializer.User {
+	ansUsers := make([]serializer.User, 0, len(users))
+	for _, v := range users {
+		ansUser := serializer.User{
+			ID:            int64(v.ID),
+			Name:          v.Name,
+			FollowCount:   int64(v.FollowCount),
+			FollowerCount: int64(v.FollowerCount),
+			IsFollow:      v.IsFollow,
+		}
+		ansUsers = append(ansUsers, ansUser)
+	}
+	return ansUsers
+}
+
+// 将graph.User转换为model.User
+func toModelUser(user *graphdb.User) *model.User {
+	ansUser := model.User{
+		ID:            user.ID,
+		UserName:      user.Name,
+		FollowCount:   int64(user.FollowCount),
+		FollowerCount: int64(user.FollowerCount),
+	}
+	return &ansUser
 }

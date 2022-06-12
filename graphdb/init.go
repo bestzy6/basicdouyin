@@ -18,6 +18,13 @@ func Neo4j() {
 	createIndex()
 }
 
+func Close() {
+	err := driver.Close()
+	if err != nil {
+		util.Log().Panic("释放Neo4j连接失败：", err)
+	}
+}
+
 // Deprecated: 清空所有数据，慎用
 func ClearAll() {
 	session := newSession()

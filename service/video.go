@@ -14,7 +14,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest) *serializer.FeedRes
 
 	var resp serializer.FeedResponse
 	var videoList []serializer.Video
-
+	var user model.User
 	if req.Token != "" {
 		userClaim, err := middleware.ParseToken(req.Token)
 		if err != nil {
@@ -22,20 +22,35 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest) *serializer.FeedRes
 			resp.StatusMsg = "未知错误"
 			return &resp
 		}
+		user.ID = userClaim.UserID
 
 	}
 	videos, err := model.FindVideoBeforeTime(req.LatestTime)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
 	for k := range videos {
-		var user serializer.User
-		userInfo, err := model.QueryUserByID(videos[k].UserID)
+		var uper serializer.User
+		upInfo, err := model.QueryUserByID(videos[k].UserID)
 		if err != nil {
 			resp.StatusCode = serializer.UnknownError
 			resp.StatusMsg = "未知错误"
 			return &resp
 		}
-		user.ID = int64(userInfo.ID)
-		user.FollowerCount = userInfo.FollowerCount
-		user.FollowCount = userInfo.FollowCount
-
+		uper.ID = int64(upInfo.ID)
+		uper.FollowerCount = upInfo.FollowerCount
+		uper.FollowCount = upInfo.FollowCount
+		if user.ID != 0 {
+			// 判断当前登录用户是否关注当前视频作者
+			if IsFollow(user.ID, int(uper.ID)) {
+				uper.IsFollow = true
+			}
+		}
 	}
+}
+
+func IsFollow(user_id_1, user_id_2 int) bool {
+	return true
 }

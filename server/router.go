@@ -3,8 +3,6 @@ package server
 import (
 	"basictiktok/api"
 	"basictiktok/server/middleware"
-	"os"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,14 +10,16 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 
-	// 中间件, 顺序不能改（此处中间件是gin中间件）
-	r.Use(middleware.Session(os.Getenv("SESSION_SECRET")))
+	// 中间件
 	r.Use(middleware.Cors())
-	r.Use(middleware.CurrentUser())
 
 	// 路由
 	v1 := r.Group("/douyin")
 	{
+		//token鉴定（需要鉴权的接口把前面改为needAuth）
+		needAuth := v1.Group("")
+		needAuth.Use(middleware.AuthToken())
+
 		//基础接口
 		v1.GET("/feed", api.Ping)                    //视频流接口
 		v1.POST("/user/register/", api.Register)     //用户注册
@@ -35,12 +35,9 @@ func NewRouter() *gin.Engine {
 		v1.GET("/comment/list", api.Ping)     //评论列表
 
 		//拓展接口2
-		v1.POST("/relation/action", api.FollowAction)       //关注操作
-		v1.GET("/relation/follow/list", api.GetFollowers)   //关注列表
-		v1.GET("/relation/follower/list", api.GetFollowees) //粉丝列表
-
-		//以下是脚手架自带,供参考，之后会删除
-		v1.POST("ping", api.Ping)
+		needAuth.POST("/relation/action", api.FollowAction)       //关注操作
+		needAuth.GET("/relation/follow/list", api.GetFollowers)   //关注列表
+		needAuth.GET("/relation/follower/list", api.GetFollowees) //粉丝列表
 	}
 	return r
 }

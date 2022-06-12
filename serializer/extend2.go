@@ -10,6 +10,7 @@ type FollowRequest struct {
 	Token      string `form:"token" json:"token" binding:"required"`             //用户鉴权token
 	ToUserId   int    `form:"to_user_id" json:"to_user_id" binding:"required"`   //对方用户id
 	ActionType int    `form:"action_type" json:"action_type" binding:"required"` //1-关注，2-取消关注
+	ReqUserId  int
 }
 
 // FollowListResponse 关注列表
@@ -20,7 +21,9 @@ type FollowListResponse struct {
 }
 
 type FollowListRequest struct {
-	c
+	Token     string `form:"token" json:"token" binding:"required"`     //用户鉴权token
+	UserId    int    `form:"user_id" json:"user_id" binding:"required"` //用户id
+	ReqUserId int
 }
 
 // FolloweesResponse 粉丝列表
@@ -31,6 +34,7 @@ type FolloweesResponse struct {
 }
 
 type FolloweesRequest struct {
-	Token  string `form:"token" json:"token" binding:"required"`     //用户鉴权token
-	UserId int    `form:"user_id" json:"user_id" binding:"required"` //用户id
+	Token     string `form:"token" json:"token" binding:"required"`     //用户鉴权token
+	UserId    int    `form:"user_id" json:"user_id" binding:"required"` //用户id
+	ReqUserId int
 }

@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"basictiktok/util"
+	"errors"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
 
-var jwtSecret = "nwpu418"
+var jwtSecret = []byte("nwpu418")
 
 type UserClaims struct {
 	*jwt.RegisteredClaims
@@ -20,18 +22,21 @@ func CreateToken(userID int) (string, error) {
 		},
 		UserID: userID,
 	}
-	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodRS256, userClaims)
+	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, userClaims)
 	return tokenClaims.SignedString(jwtSecret)
 }
 
+// ParseToken 解析token，如果过期会返回错误
 func ParseToken(token string) (*UserClaims, error) {
 	tokenClaims, err := jwt.ParseWithClaims(token, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
-	if tokenClaims != nil {
-		if claims, ok := tokenClaims.Claims.(*UserClaims); ok && tokenClaims.Valid {
-			return claims, nil
-		}
+	if err != nil {
+		util.Log().Error("解析token出错\n", err)
+		return nil, err
 	}
-	return nil, err
+	if claims, ok := tokenClaims.Claims.(*UserClaims); ok && tokenClaims.Valid {
+		return claims, nil
+	}
+	return nil, errors.New("解析token出错")
 }

@@ -17,15 +17,23 @@ func FollowAction(c *gin.Context) {
 		})
 		return
 	}
-	if req.ActionType != 1 && req.ActionType != 2 {
-		c.JSON(http.StatusOK, serializer.FollowResponse{
-			StatusCode: serializer.ParamInvalid,
-			StatusMsg:  "请求参数错误",
-		})
+	reqUserId, _ := c.Get("userid")
+	req.ReqUserId = reqUserId.(int)
+	var resp *serializer.FollowResponse
+	if req.ActionType == 1 {
+		resp = service.FollowService(&req)
+		c.JSON(http.StatusOK, resp)
 		return
 	}
-	resp := service.FollowService(&req)
-	c.JSON(http.StatusOK, resp)
+	if req.ActionType == 2 {
+		resp = service.UnFollowService(&req)
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	c.JSON(http.StatusOK, serializer.FollowResponse{
+		StatusCode: serializer.ParamInvalid,
+		StatusMsg:  "请求参数错误",
+	})
 }
 
 // GetFollowers 获取关注列表
@@ -38,6 +46,8 @@ func GetFollowers(c *gin.Context) {
 		})
 		return
 	}
+	reqUserId, _ := c.Get("userid")
+	req.ReqUserId = reqUserId.(int)
 	resp := service.FollowersService(&req)
 	c.JSON(http.StatusOK, resp)
 }
@@ -52,6 +62,8 @@ func GetFollowees(c *gin.Context) {
 		})
 		return
 	}
+	reqUserId, _ := c.Get("userid")
+	req.ReqUserId = reqUserId.(int)
 	resp := service.FolloweesService(&req)
 	c.JSON(http.StatusOK, resp)
 }
