@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
+	"github.com/u2takey/go-utils/uuid"
 	"net/http"
-	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -28,12 +29,14 @@ func PublishVideo(c *gin.Context) {
 	}
 
 	// 获取视频以及图片存储目录
-	video_dictory := os.Getenv("VIDEO_DICTORY")
-	picture_dictory := os.Getenv("PICTURE_DICTORY")
+	video_dictory := "./static/video/"
+	picture_dictory := "./static/img/"
 
 	filename := filepath.Base(data.Filename)
-	user := serializer.User{ID: 1}
-	finalName := fmt.Sprintf("%d_%s", user.ID, filename)
+	// 通过token获取登录用户id
+	id, _ := c.Get("userid")
+	userid := id.(int)
+	finalName := fmt.Sprintf("%d_%s", userid, filename)
 	saveFile := filepath.Join(video_dictory, finalName)
 	if err := c.SaveUploadedFile(data, saveFile); err != nil {
 		c.JSON(http.StatusOK, serializer.ActionResponse{
@@ -49,11 +52,13 @@ func PublishVideo(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
-	outputName := "out" + ".jpeg"
-	outputName = fmt.Sprintf("%d_%s", user.ID, outputName)
-	outputName = filepath.Join(picture_dictory, outputName)
-	err = imaging.Save(img, outputName)
+	// 通过UUID生成唯一的视频封面名
+	name := uuid.NewUUID()
+	name = strings.Replace(name, "-", "", -1)
+	outputName := name + ".jpeg"
+	outputName = fmt.Sprintf("%d_%s", userid, outputName)
+	savePicture := filepath.Join(picture_dictory, outputName)
+	err = imaging.Save(img, savePicture)
 	if err != nil {
 		fmt.Println(err.Error())
 
@@ -70,15 +75,15 @@ func PublishVideo(c *gin.Context) {
 	// 生成视频信息
 	//video.UserID = int64(userClaim.UserID)
 	// 投稿用户id
-	video.UserID = 1
+	video.UserID = int64(userid)
 	// 视频封面url
-	video.CoverURL = outputName
+	video.CoverURL = "http://" + c.Request.Host + "/static/img/" + outputName
 	// 视频评论数
 	video.CommentCount = 0
 	// 视频点赞人数
 	video.FavoriteCount = 0
 	// 视频播放地址
-	video.PlayURL = saveFile
+	video.PlayURL = "http://" + c.Request.Host + "/static/video/" + finalName
 	// 视频标题
 	video.Title = c.PostForm("title")
 	// 视频添加时间
@@ -99,6 +104,7 @@ func PublishVideo(c *gin.Context) {
 	})
 }
 
+// 视频流接口
 func VideoList(c *gin.Context) {
 	var req serializer.FeedRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -112,6 +118,7 @@ func VideoList(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// 用户视频发布列表
 func ListVideos(c *gin.Context) {
 	var req serializer.ListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -121,6 +128,8 @@ func ListVideos(c *gin.Context) {
 		})
 		return
 	}
-	resp := service.ListVideosService(&req)
+	id, _ := c.Get("userid")
+	userid := id.(int)
+	resp := service.ListVideosService(&req, userid)
 	c.JSON(http.StatusOK, resp)
 }

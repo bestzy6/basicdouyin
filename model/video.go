@@ -18,6 +18,12 @@ func CreateAVideo(video *Video) (err error) {
 
 func FindVideoBeforeTime(time int64) ([]*Video, error) {
 	var videos []*Video
-	err := DB.Debug().Where("add_time < ?", time).Limit(30).Order("add_time").Find(&videos).Error
+	err := DB.Debug().Where("add_time > ?", time).Limit(30).Order("add_time").Find(&videos).Error
+	return videos, err
+}
+
+func QueryVideoListByUserID(userid int) ([]*Video, error) {
+	var videos []*Video
+	err := DB.Debug().Where("user_id = ?", userid).Find(&videos).Error
 	return videos, err
 }

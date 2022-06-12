@@ -7,10 +7,6 @@ import (
 	"basictiktok/server/middleware"
 )
 
-func PublishService(req *serializer.ActionRequest) {
-
-}
-
 func FindVideoBeforeTimeService(req *serializer.FeedRequest) *serializer.FeedResponse {
 
 	var resp serializer.FeedResponse
@@ -85,13 +81,48 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest) *serializer.FeedRes
 	return &resp
 }
 
-func ListVideosService(req *serializer.ListRequest) *serializer.ListResponse {
+func ListVideosService(req *serializer.ListRequest, userid int) *serializer.ListResponse {
 	var resp serializer.ListResponse
-	userClaim, err := middleware.ParseToken(req.Token)
+	user, err := model.QueryUserByID(req.UserId)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
+	var userRes serializer.User
+	var videoList []serializer.Video
+	userRes.ID = int64(user.ID)
+	userRes.Name = user.UserName
+	userRes.IsFollow, err = graphdb.IsFollow(userid, user.ID)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
+	userRes.FollowCount = user.FollowCount
+	userRes.FollowerCount = user.FollowerCount
 
+	videos, err := model.QueryVideoListByUserID(user.ID)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
+	for k := range videos {
+		var videoRes serializer.Video
+		videoRes.Author = userRes
+		videoRes.IsFavorite = true
+		videoRes.Title = videos[k].Title
+		videoRes.PlayURL = videos[k].PlayURL
+		videoRes.CoverURL = videos[k].CoverURL
+		videoRes.FavoriteCount = videos[k].FavoriteCount
+		videoRes.CommentCount = videos[k].CommentCount
+		videoRes.ID = videos[k].ID
+		videoList = append(videoList, videoRes)
+	}
+
+	resp.VideoList = videoList
+	resp.StatusCode = serializer.OK
+	resp.StatusMsg = "ok"
+	return &resp
 }

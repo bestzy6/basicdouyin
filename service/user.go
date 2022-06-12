@@ -3,6 +3,7 @@ package service
 import (
 	"basictiktok/model"
 	"basictiktok/serializer"
+	"basictiktok/server/middleware"
 	"basictiktok/util"
 )
 
@@ -23,9 +24,15 @@ func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterRespon
 	}
 
 	// 返回用户注册消息
+	token, err := middleware.CreateToken(user.ID)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
-	resp.Token = "token"
+	resp.Token = token
 	resp.UserID = int64(user.ID)
 	return &resp
 }
@@ -48,9 +55,15 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 		return &resp
 	}
 
+	token, err := middleware.CreateToken(user.ID)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
-	resp.Token = "token"
+	resp.Token = token
 	resp.UserID = int64(user.ID)
 	return &resp
 
