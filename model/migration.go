@@ -8,4 +8,5 @@ func migration() {
 	_ = DB.AutoMigrate(&Video{})
 	_ = DB.AutoMigrate(&Post{})
 	_ = DB.AutoMigrate(&FavoritePost{})
+	_ = DB.AutoMigrate(&VideoCL{})
 }

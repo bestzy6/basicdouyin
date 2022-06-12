@@ -29,19 +29,19 @@ func InitMQ() {
 }
 
 func listenToModelUserMQ() {
-	var msg *G2mMessage
-	for {
-		msg = <-ToModelUserMQ
-		user := msg.User
-		switch msg.Num {
-		case DecreFollower:
-			user.DecreFollow()
-		case IncreFollower:
-			user.IncreFollow()
-		case DecreFollowee:
-			user.DecreFollowee()
-		case IncreFollowee:
-			user.IncreFollowee()
-		}
-	}
+	//var msg *G2mMessage
+	//for {
+	//	msg = <-ToModelUserMQ
+	//	user := msg.User
+	//	switch msg.Num {
+	//	case DecreFollower:
+	//		user.DecreFollow()
+	//	case IncreFollower:
+	//		user.IncreFollow()
+	//	case DecreFollowee:
+	//		user.DecreFollowee()
+	//	case IncreFollowee:
+	//		user.IncreFollowee()
+	//	}
+	//}
 }

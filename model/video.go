@@ -20,3 +20,13 @@ func CreateAVideo(video *Video) (err error) {
 	err = DB.Debug().Create(&video).Error
 	return
 }
+
+//func QueryByVideoId(videoId int64) (*Video, error) {
+//	var video Video
+//	err := DB.Table("douyin.videos").Where("video_id = ?", videoId).Find(&video).Error
+//	if err != nil {
+//		util.Log().Error("find posts by video_id err:" + err.Error())
+//		return nil, err
+//	}
+//	return &video, nil
+//}

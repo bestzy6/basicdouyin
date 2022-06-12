@@ -20,7 +20,8 @@ func CommentPostService(req *serializer.CommentRequest) *serializer.CommentRespo
 		IsFollow:      false,
 		Name:          user.UserName,
 	}
-
+	// 获取评论数
+	commentNums, err := model.NewVideoClDaoInstance().QueryByVideoId(int64(req.VideoId))
 	if req.ActionType == 1 { // 添加评论
 		comment = serializer.Comment{
 			Content:    req.CommentText,
@@ -33,10 +34,10 @@ func CommentPostService(req *serializer.CommentRequest) *serializer.CommentRespo
 			VideoId:    int64(req.VideoId),
 			UserId:     0, // token 获取
 			Content:    req.CommentText,
-			DiggCount:  10,                 // 每一条视频的评论总数
-			CreateTime: comment.CreateDate, // 时间保持一致
+			DiggCount:  int32(commentNums.CommentCount + 1), // 发表评论的时候视频的评论数要++，先搞一个冗余表，读取到冗余表的评论数++ 然后在赋值到video表，之后再改成消息队列的形式
+			CreateTime: comment.CreateDate,                  // 时间保持一致
 		}
-		if err := model.NewPostDaoInstance().CreatePost(&post); err != nil {
+		if err = model.NewPostDaoInstance().CreatePost(&post); err != nil {
 			util.Log().Error("添加评论失败:", err)
 		}
 	} else {

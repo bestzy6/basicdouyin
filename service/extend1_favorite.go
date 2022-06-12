@@ -10,11 +10,16 @@ import (
 func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse {
 	// 先验证token
 	var resp serializer.LikesResponse
+	vid := req.VideoId
+	commentNums, _ := model.NewVideoClDaoInstance().QueryByVideoId(int64(vid))
+	//vidObj, _ := model.QueryByVideoId(int64(vid))  等佳佳写完对接下
+	//vidObj.FavoriteCount = commentNums.FavoriteCount
+	// 更新表的点赞总数
 	if req.ActionType == 1 { //点赞操作
 		fPost := model.FavoritePost{
 			UserId:    1, // 根据token 获得 user_id
 			VideoId:   int64(req.VideoId),
-			DiggCount: 0, // 这个怎么++呢 ，对应视频的点赞数++，根据video_id 找到对应的视频，然后把那个属性更新
+			DiggCount: int32(commentNums.FavoriteCount + 1), // 这个怎么++呢 ，对应视频的点赞数++，根据video_id 找到对应的视频，然后把那个属性更新
 		}
 		if err := model.NewFavoritePostDaoInstance().CreateFPost(&fPost); err != nil {
 			util.Log().Error("点赞失败:", err)
