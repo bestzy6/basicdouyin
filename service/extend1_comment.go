@@ -8,15 +8,14 @@ import (
 )
 
 // CommentPostService 在对应的视频下添加评论
-func CommentPostService(req *serializer.CommentRequest) *serializer.CommentResponse {
+func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.CommentResponse {
 	var resp serializer.CommentResponse
 	var comment serializer.Comment
-	// 根据 token 获取userid ，根据userid 查询user 信息
-	user, _ := model.QueryUser(10) // 从token 获取
+	user, _ := model.QueryUser(int64(userId))
 	userTmp := serializer.User{
 		FollowCount:   user.FollowCount,
 		FollowerCount: user.FollowerCount,
-		ID:            0, // token获取
+		ID:            int64(userId),
 		IsFollow:      false,
 		Name:          user.UserName,
 	}
@@ -32,7 +31,7 @@ func CommentPostService(req *serializer.CommentRequest) *serializer.CommentRespo
 		post := model.Post{
 			Id:         int64(req.CommentId),
 			VideoId:    int64(req.VideoId),
-			UserId:     0, // token 获取
+			UserId:     int64(userId),
 			Content:    req.CommentText,
 			DiggCount:  int32(commentNums.CommentCount + 1), // 发表评论的时候视频的评论数要++，先搞一个冗余表，读取到冗余表的评论数++ 然后在赋值到video表，之后再改成消息队列的形式
 			CreateTime: comment.CreateDate,                  // 时间保持一致
