@@ -69,8 +69,8 @@ func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListRe
 	return &resp
 }
 
-// isFavorite 获取用户点赞的视频
-func isFavorite(userId, videoId int64) bool {
+// IsFavorite 获取用户点赞的视频
+func IsFavorite(userId, videoId int64) bool {
 	newFPO := model.NewFavoritePostDaoInstance()
 	tmp, err := newFPO.QueryFavoritePostById(userId)
 	if err != nil {
