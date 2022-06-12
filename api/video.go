@@ -82,7 +82,7 @@ func PublishVideo(c *gin.Context) {
 	// 视频标题
 	video.Title = c.PostForm("title")
 	// 视频添加时间
-	video.AddTime = time.Now()
+	video.AddTime = time.Now().Unix()
 	// 将视频信息插入数据库
 	err = model.CreateAVideo(&video)
 	if err != nil {
@@ -109,5 +109,18 @@ func VideoList(c *gin.Context) {
 		return
 	}
 	resp := service.FindVideoBeforeTimeService(&req)
+	c.JSON(http.StatusOK, resp)
+}
+
+func ListVideos(c *gin.Context) {
+	var req serializer.ListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusOK, serializer.RegisterResponse{
+			StatusCode: serializer.ParamInvalid,
+			StatusMsg:  "请求参数错误",
+		})
+		return
+	}
+	resp := service.ListVideosService(&req)
 	c.JSON(http.StatusOK, resp)
 }

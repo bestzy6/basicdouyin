@@ -2,7 +2,6 @@ package serializer
 
 import (
 	"mime/multipart"
-	"time"
 )
 
 // ListResponse 发布列表
@@ -10,6 +9,11 @@ type ListResponse struct {
 	StatusCode ErrNo   `json:"status_code"` // 状态码，0-成功，其他值-失败
 	StatusMsg  string  `json:"status_msg"`  // 返回状态描述
 	VideoList  []Video `json:"video_list"`  // 用户发布的视频列表
+}
+
+type ListRequest struct {
+	Token  string `form:"token" json:"token" binding:"required"` //用户鉴权token
+	UserId int64  `form:"user_id" json:"user_id" binding:"required"`
 }
 
 // ActionResponse 投稿接口
@@ -34,7 +38,7 @@ type UserInfoResponse struct {
 // UserInfoRequest 用户信息输入
 type UserInfoRequest struct {
 	Token  string `form:"token" json:"token" binding:"required"`     //用户鉴权token
-	UserId int    `form:"user_id" json:"user_id" binding:"required"` //用户id
+	UserId int64  `form:"user_id" json:"user_id" binding:"required"` //用户id
 }
 
 // LoginResponse 用户登入响应
@@ -76,6 +80,6 @@ type FeedResponse struct {
 
 // FeedRequset 视频流请求
 type FeedRequest struct {
-	LatestTime time.Time `form:"lastet_time" json:"latest_time"` // 返回当前指定时间之前上传的视频视频
-	Token      string    `form:"token" json:"token"`             //用户鉴权token
+	LatestTime int64  `form:"lastet_time" json:"latest_time"` // 返回当前指定时间之前上传的视频视频
+	Token      string `form:"token" json:"token"`             //用户鉴权token
 }

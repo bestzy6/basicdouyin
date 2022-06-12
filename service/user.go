@@ -10,7 +10,7 @@ import (
 func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterResponse {
 	var resp serializer.RegisterResponse
 	var user model.User
-	user.Username = req.Username
+	user.UserName = req.Username
 	// 获取md5加密后的密码
 	user.Password = util.PasswordWithMD5(req.Password)
 	user.Nickname = req.Nickname
@@ -69,7 +69,7 @@ func QueryUserInfoService(req *serializer.UserInfoRequest) *serializer.UserInfoR
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	resp.User.ID = int64(user.ID)
-	resp.User.Name = user.Username
+	resp.User.Name = user.UserName
 	resp.User.FollowCount = user.FollowCount
 	resp.User.FollowerCount = user.FollowerCount
 	// 这个需要查询用户关注信息
