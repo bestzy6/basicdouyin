@@ -20,8 +20,7 @@ type FollowListResponse struct {
 }
 
 type FollowListRequest struct {
-	Token  string `form:"token" json:"token" binding:"required"`     //用户鉴权token
-	UserId int    `form:"user_id" json:"user_id" binding:"required"` //用户id
+	c
 }
 
 // FolloweesResponse 粉丝列表

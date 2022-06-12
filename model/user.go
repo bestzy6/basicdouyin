@@ -8,14 +8,14 @@ import (
 
 // User 用户模型
 type User struct {
-	ID             int    `gorm:"column:id;AUTO_INCREMENT"`
-	UserName       string `gorm:"unique"` //用户名
-	PasswordDigest string // 用户密码
-	Nickname       string // 用户昵称
-	Status         string // 用户状态
-	Avatar         string `gorm:"size:1000"` // 用户头像
-	FollowCount    int64  // 关注总数
-	FollowerCount  int64  // 粉丝总数
+	ID            int    `gorm:"column:id;AUTO_INCREMENT"`
+	Username      string `gorm:"unique"` //用户名
+	Password      string // 用户密码
+	Nickname      string // 用户昵称
+	Status        string // 用户状态
+	Avatar        string `gorm:"size:1000"` // 用户头像
+	FollowCount   int64  // 关注总数
+	FollowerCount int64  // 粉丝总数
 }
 
 const (
@@ -64,12 +64,12 @@ func (user *User) SetPassword(password string) error {
 	if err != nil {
 		return err
 	}
-	user.PasswordDigest = string(bytes)
+	user.Password = string(bytes)
 	return nil
 }
 
 // CheckPassword 校验密码
 func (user *User) CheckPassword(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordDigest), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	return err == nil
 }

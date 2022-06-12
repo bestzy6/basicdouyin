@@ -21,12 +21,12 @@ func NewRouter() *gin.Engine {
 	v1 := r.Group("/douyin")
 	{
 		//基础接口
-		v1.GET("/feed", api.Ping)            //视频流接口
-		v1.POST("/user/register", api.Register)  //用户注册
-		v1.POST("/user/login", api.Login)     //用户登录
-		v1.GET("/user", api.QueryUserInfo)            //用户信息
+		v1.GET("/feed", api.Ping)                    //视频流接口
+		v1.POST("/user/register/", api.Register)     //用户注册
+		v1.POST("/user/login", api.Login)            //用户登录
+		v1.GET("/user", api.QueryUserInfo)           //用户信息
 		v1.POST("/publish/action", api.PublishVideo) //投稿接口
-		v1.GET("/publish/list", api.Ping)    //发布列表
+		v1.GET("/publish/list", api.Ping)            //发布列表
 
 		//拓展接口1
 		v1.POST("/favorite/action", api.Ping) //赞操作

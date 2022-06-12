@@ -10,9 +10,9 @@ import (
 func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterResponse {
 	var resp serializer.RegisterResponse
 	var user model.User
-	user.UserName = req.UserName
+	user.Username = req.Username
 	// 获取md5加密后的密码
-	user.PasswordDigest = util.PasswordWithMD5(req.PasswordDigest)
+	user.Password = util.PasswordWithMD5(req.Password)
 	user.Nickname = req.Nickname
 
 	// 通过注册信息新建一个用户
@@ -42,7 +42,7 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 	}
 
 	passwordWithMD5 := util.PasswordWithMD5(req.PasswordDigest)
-	if passwordWithMD5 != user.PasswordDigest {
+	if passwordWithMD5 != user.Password {
 		resp.StatusCode = serializer.WrongPassword
 		resp.StatusMsg = "密码错误"
 		return &resp
@@ -69,7 +69,7 @@ func QueryUserInfoService(req *serializer.UserInfoRequest) *serializer.UserInfoR
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	resp.User.ID = int64(user.ID)
-	resp.User.Name = user.UserName
+	resp.User.Name = user.Username
 	resp.User.FollowCount = user.FollowCount
 	resp.User.FollowerCount = user.FollowerCount
 	// 这个需要查询用户关注信息

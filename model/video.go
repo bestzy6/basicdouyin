@@ -19,3 +19,9 @@ func CreateAVideo(video *Video) (err error) {
 	err = DB.Debug().Create(&video).Error
 	return
 }
+
+func FindVideoBeforeTime(time2 time.Time) ([]*Video, error) {
+	var videos []*Video
+	err := DB.Debug().Where("add_time < ?", time2).Limit(30).Order("add_time").Find(&videos).Error
+	return videos, err
+}
