@@ -19,3 +19,4 @@ func CreateAVideo(video *Video) (err error) {
 	err = DB.Debug().Create(&video).Error
 	return
 }
+

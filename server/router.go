@@ -31,10 +31,10 @@ func NewRouter() *gin.Engine {
 		v1.GET("/publish/list", api.Ping)            //发布列表
 
 		//拓展接口1
-		v1.POST("/favorite/action", api.Ping) //赞操作
-		v1.GET("/favorite/list", api.Ping)    //点赞列表
-		v1.POST("/comment/action", api.Ping)  //评论操作
-		v1.GET("/comment/list", api.Ping)     //评论列表
+		v1.POST("/favorite/action", api.FavoritePost) //赞操作
+		v1.GET("/favorite/list", api.FavoriteList)    //点赞列表
+		v1.POST("/comment/action", api.CommentPost)   //评论操作
+		v1.GET("/comment/list", api.CommentList)      //评论列表
 
 		//拓展接口2
 		needAuth.POST("/relation/action", api.FollowAction)       //关注操作
