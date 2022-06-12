@@ -10,22 +10,28 @@ import (
 // CommentPostService 在对应的视频下添加评论
 func CommentPostService(req *serializer.CommentRequest) *serializer.CommentResponse {
 	var resp serializer.CommentResponse
-	var user serializer.User
 	var comment serializer.Comment
 	// 根据 token 获取userid ，根据userid 查询user 信息
-	// userid := req.Token
-	// user = getUser(userid)   和佳佳的表对接下
-	if req.ActionType == 1 { // 添加评论（video_id -> comment表
+	user, _ := model.QueryUser(10) // 从token 获取
+	userTmp := serializer.User{
+		FollowCount:   user.FollowCount,
+		FollowerCount: user.FollowerCount,
+		ID:            0, // token获取
+		IsFollow:      false,
+		Name:          user.UserName,
+	}
+
+	if req.ActionType == 1 { // 添加评论
 		comment = serializer.Comment{
 			Content:    req.CommentText,
 			CreateDate: time.Now().Format("2006-01-02 15:04:05"),
 			ID:         int64(req.CommentId),
-			User:       user, // get 一波user
+			User:       userTmp, // get 一波user
 		}
 		post := model.Post{
 			Id:         int64(req.CommentId),
 			VideoId:    int64(req.VideoId),
-			UserId:     user.ID,
+			UserId:     0, // token 获取
 			Content:    req.CommentText,
 			DiggCount:  10,                 // 每一条视频的评论总数
 			CreateTime: comment.CreateDate, // 时间保持一致
@@ -58,8 +64,6 @@ func CommentListService(req *serializer.CommentListRequest) *serializer.CommList
 			ID:         v.Id,
 			User:       serializer.User{},
 		}
-		//commentTmp.User = v.UserId
-		//commentTmp.CreateDate = v.CreateTime
 		commentTmp1 = append(commentTmp1, &commentTmp)
 	}
 	resp.StatusCode = serializer.OK

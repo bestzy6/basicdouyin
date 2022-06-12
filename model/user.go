@@ -10,13 +10,13 @@ import (
 // User 用户模型
 type User struct {
 	gorm.Model
-	UserName       string						//用户名
-	PasswordDigest string	// 用户密码
-	Nickname       string	// 用户昵称
-	Status         string	// 用户状态
-	Avatar         string `gorm:"size:1000"`	// 用户头像
-	FollowCount    int64     // 关注总数
-	FollowerCount  int64   // 粉丝总数
+	UserName       string //用户名
+	PasswordDigest string // 用户密码
+	Nickname       string // 用户昵称
+	Status         string // 用户状态
+	Avatar         string `gorm:"size:1000"` // 用户头像
+	FollowCount    int64  // 关注总数
+	FollowerCount  int64  // 粉丝总数
 }
 
 const (
@@ -30,15 +30,14 @@ const (
 	Suspend string = "suspend"
 )
 
-
-// 创建一个新用户
-func CreateAUser(user *User)(err error){
+// CreateAUser 创建一个新用户
+func CreateAUser(user *User) (err error) {
 	err = DB.Create(&user).Error
 	return
 }
 
-// 通过用户名查询用户信息
-func QueryAUser(username string)(user *User,err error)  {
+// QueryAUser 通过用户名查询用户信息
+func QueryAUser(username string) (user *User, err error) {
 	user = new(User)
 	if err = DB.Debug().Where("username=?", username).Find(user).Error; err != nil {
 		return nil, err
@@ -46,17 +45,17 @@ func QueryAUser(username string)(user *User,err error)  {
 	return user, nil
 }
 
-// 通过用户id查询用户信息
-func QueryUser(id int64)(User,error){
+// QueryUser 通过用户id查询用户信息
+func QueryUser(id int64) (User, error) {
 	var user User
-	result := DB.First(&user,id)
+	result := DB.First(&user, id)
 	return user, result.Error
 }
 
 // GetUser 用ID获取用户
 func GetUser(ID interface{}) (User, error) {
 	var user User
-	result := db.First(&user, ID)
+	result := DB.First(&user, ID)
 	return user, result.Error
 }
 

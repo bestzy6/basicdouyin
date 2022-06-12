@@ -48,7 +48,7 @@ func NewPostDaoInstance() *PostDao {
 // QueryPostByVideoId 根据视频Id 查询所有的评论
 func (*PostDao) QueryPostByVideoId(videoId int64) ([]*Post, error) {
 	var posts []*Post
-	err := db.Where("video_id = ?", videoId).Find(&posts).Error
+	err := DB.Table("douyin.post").Where("video_id = ?", videoId).Find(&posts).Error
 	if err != nil {
 		util.Log().Error("find posts by video_id err:" + err.Error())
 		return nil, err
@@ -58,7 +58,7 @@ func (*PostDao) QueryPostByVideoId(videoId int64) ([]*Post, error) {
 
 // CreatePost 提交评论
 func (*PostDao) CreatePost(post *Post) error {
-	if err := db.Create(post).Error; err != nil {
+	if err := DB.Table("douyin.post").Create(post).Error; err != nil {
 		util.Log().Error("insert post err:" + err.Error())
 		return err
 	}

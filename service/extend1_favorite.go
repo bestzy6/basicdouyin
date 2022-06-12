@@ -38,12 +38,26 @@ func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListRe
 		util.Log().Error("点赞失败:", err)
 	}
 	videoLs := favoritePostDao.GetVideoIdList(videoPost)
-	result, err1 := favoritePostDao.QueryPostByUserId(videoLs) // 拿到所有相关的video 实体
+	results, err1 := favoritePostDao.QueryPostByUserId(videoLs) // 拿到所有相关的video 实体
 	if err1 != nil {
 		util.Log().Error("点赞失败:", err)
 	}
+	var videoTmpIndex []*serializer.Video
+	for _, result := range results {
+		videoTmp := serializer.Video{
+			Author:        serializer.User{},
+			CommentCount:  result.CommentCount,
+			CoverURL:      result.CoverURL,
+			FavoriteCount: result.FavoriteCount,
+			ID:            result.ID,
+			IsFavorite:    false,
+			PlayURL:       result.PlayURL,
+			Title:         result.Title,
+		}
+		videoTmpIndex = append(videoTmpIndex, &videoTmp)
+	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "查询点赞列表成功"
-	resp.VideoList = result
+	resp.VideoList = videoTmpIndex
 	return &resp
 }

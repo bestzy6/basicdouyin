@@ -1,7 +1,6 @@
 package model
 
 import (
-	"basictiktok/serializer"
 	"basictiktok/util"
 	"gorm.io/gorm"
 	"sync"
@@ -36,7 +35,7 @@ func NewFavoritePostDaoInstance() *FavoritePostDao {
 // QueryFavoritePostById 先用userid 查到所有的视频id,
 func (*FavoritePostDao) QueryFavoritePostById(userid int64) ([]*FavoritePost, error) {
 	var videoId []*FavoritePost
-	err := db.Table("douyincommunity2.favorite_post").Where("user_id = ?", userid).Find(&videoId).Error
+	err := DB.Table("douyin.favorite_post").Where("user_id = ?", userid).Find(&videoId).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
 	}
@@ -57,9 +56,9 @@ func (*FavoritePostDao) GetVideoIdList(videoId []*FavoritePost) []int64 {
 }
 
 // QueryPostByUserId 根据video_Id 查询所有的点赞的视频
-func (*FavoritePostDao) QueryPostByUserId(videoLs []int64) ([]*serializer.Video, error) {
-	var videos []*serializer.Video
-	err := db.Where("video_id in (?)", videoLs).Find(&videos).Error // 拿着所有的videoID 查询对应的Video实体，在giao的表去查
+func (*FavoritePostDao) QueryPostByUserId(videoLs []int64) ([]*Video, error) {
+	var videos []*Video
+	err := DB.Table("douyin.videos").Where("id in (?)", videoLs).Find(&videos).Error // 优化地方
 	if err != nil {
 		util.Log().Error("find posts by video_id err:" + err.Error())
 		return nil, err
@@ -69,7 +68,7 @@ func (*FavoritePostDao) QueryPostByUserId(videoLs []int64) ([]*serializer.Video,
 
 // CreateFPost 点赞
 func (*FavoritePostDao) CreateFPost(fPost *FavoritePost) error {
-	if err := db.Table("douyincommunity2.favorite_post").Create(fPost).Error; err != nil {
+	if err := DB.Table("douyin.favorite_post").Create(fPost).Error; err != nil {
 		util.Log().Error("insert post err:" + err.Error())
 		return err
 	}

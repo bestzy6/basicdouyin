@@ -25,6 +25,7 @@ func CommentPost(c *gin.Context) {
 		return
 	}
 	// 构造响应,返回评论内容
+	//reqUserId, _ := c.Get("userid")
 	resp := service.CommentPostService(&req)
 	c.JSON(http.StatusOK, resp)
 }
