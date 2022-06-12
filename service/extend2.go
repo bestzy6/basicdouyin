@@ -7,7 +7,7 @@ import (
 	"basictiktok/serializer"
 )
 
-// FollowService 关注服务（还需要添加对数据库的操作）
+// FollowService 关注服务
 func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	var resp serializer.FollowResponse
 	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
@@ -21,16 +21,12 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	//以下操作异步修改数据库
-	msg1 := mq.G2mMessage{
-		User: toModelUser(&user),
-		Num:  mq.IncreFollower,
+	msg := mq.G2mMessage{
+		User:   toModelUser(&user),
+		ToUser: toModelUser(&targetUser),
+		Num:    mq.Follow,
 	}
-	mq.ToModelUserMQ <- &msg1
-	msg2 := mq.G2mMessage{
-		User: toModelUser(&targetUser),
-		Num:  mq.IncreFollowee,
-	}
-	mq.ToModelUserMQ <- &msg2
+	mq.ToModelUserMQ <- &msg
 	return &resp
 }
 
@@ -48,16 +44,12 @@ func UnFollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	//以下操作异步修改数据库
-	msg1 := mq.G2mMessage{
-		User: toModelUser(&user),
-		Num:  mq.DecreFollower,
+	msg := mq.G2mMessage{
+		User:   toModelUser(&user),
+		ToUser: toModelUser(&targetUser),
+		Num:    mq.UnFollow,
 	}
-	mq.ToModelUserMQ <- &msg1
-	msg2 := mq.G2mMessage{
-		User: toModelUser(&targetUser),
-		Num:  mq.DecreFollowee,
-	}
-	mq.ToModelUserMQ <- &msg2
+	mq.ToModelUserMQ <- &msg
 	return &resp
 }
 

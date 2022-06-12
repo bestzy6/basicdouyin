@@ -75,21 +75,43 @@ func (user *User) CheckPassword(password string) bool {
 	return err == nil
 }
 
-// IncreFollow 关注数+1
-func (user *User) IncreFollow() error {
-	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
+// Follow 关注
+func (user *User) Follow(toUser *User) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		tx.Begin()
+		err := tx.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		err = DB.Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		tx.Commit()
+		return nil
+	})
 	return err
 }
 
-// DecreFollow 关注数-1
-func (user *User) DecreFollow() error {
-	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
-	return err
-}
-
-// IncreFollowee 粉丝数+1
-func (user *User) IncreFollowee() error {
-	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follower_count + ?", 1)).Error
+// UnFollow 取消关注
+func (user *User) UnFollow(toUser *User) error {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		tx.Begin()
+		err := tx.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		err = tx.Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count - ?", 1)).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		tx.Commit()
+		return nil
+	})
 	return err
 }
 
