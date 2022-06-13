@@ -284,6 +284,10 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 
 // HasFollow 判断是否关注，，target的ID必填，true为已关注，false为未关注
 func (u User) HasFollow(target *User) (bool, error) {
+	//默认自己关注了自己
+	if u.ID == target.ID {
+		return true, nil
+	}
 	session := newSession()
 	defer func(session neo4j.Session) {
 		err := session.Close()
@@ -326,6 +330,10 @@ func (u User) record2User(record *neo4j.Record, key string) *User {
 
 // IsFollow 判断是否关注
 func IsFollow(src, target int) (bool, error) {
+	//同一个人时，返回真
+	if src == target {
+		return true, nil
+	}
 	session := newSession()
 	defer func(session neo4j.Session) {
 		err := session.Close()

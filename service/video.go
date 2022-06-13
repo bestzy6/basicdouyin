@@ -7,9 +7,7 @@ import (
 )
 
 func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serializer.FeedResponse {
-
 	var resp serializer.FeedResponse
-	var videoList []serializer.Video
 	var user model.User
 	user.ID = userid
 	// 找出请求时间之前的30条视频信息返回
@@ -24,19 +22,22 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 		resp.StatusMsg = "服务器没有视频"
 		return &resp
 	}
+	videoList := make([]serializer.Video, 0, 30)
 	// 将视频信息与上传作者信息进行绑定返回
 	for k := range videos {
-		var videoRes serializer.Video
-		var uper serializer.User
 		upInfo, err := model.QueryUserByID(videos[k].UserID)
 		if err != nil {
 			resp.StatusCode = serializer.UnknownError
 			resp.StatusMsg = "未知错误"
 			return &resp
 		}
-		uper.ID = int64(upInfo.ID)
-		uper.FollowerCount = upInfo.FollowerCount
-		uper.FollowCount = upInfo.FollowCount
+		uper := serializer.User{
+			ID:            int64(upInfo.ID),
+			FollowerCount: upInfo.FollowerCount,
+			FollowCount:   upInfo.FollowCount,
+		}
+
+		var videoRes serializer.Video
 		if user.ID != 0 {
 			// 判断当前登录用户是否关注当前视频作者
 			isFollow, err := graphdb.IsFollow(user.ID, int(uper.ID))
@@ -79,7 +80,6 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 		return &resp
 	}
 	var userRes serializer.User
-	var videoList []serializer.Video
 	userRes.ID = int64(user.ID)
 	userRes.Name = user.UserName
 	userRes.IsFollow, err = graphdb.IsFollow(userid, user.ID)
@@ -97,6 +97,7 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
+	videoList := make([]serializer.Video, 0, len(videos))
 	for k := range videos {
 		var videoRes serializer.Video
 		videoRes.Author = userRes

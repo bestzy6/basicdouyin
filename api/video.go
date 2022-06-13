@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 //
@@ -69,32 +68,14 @@ func PublishVideo(c *gin.Context) {
 		fmt.Println(err.Error())
 
 	}
-
-	var video model.Video
-	//userClaim, err := middleware.ParseToken(c.PostForm("token"))
-	//if err != nil {
-	//	c.JSON(http.StatusOK, serializer.ActionResponse{
-	//		StatusCode: serializer.ParamInvalid,
-	//		StatusMsg:  "请求参数错误",
-	//	})
-	//}
-	// 生成视频信息
-	//video.UserID = int64(userClaim.UserID)
-	// 投稿用户id
-	video.UserID = int64(userid)
-	// 视频封面url
-	video.CoverURL = "http://" + c.Request.Host + "/static/img/" + outputName
-	// 视频评论数
-	video.CommentCount = 0
-	// 视频点赞人数
-	video.FavoriteCount = 0
-	// 视频播放地址
-	video.PlayURL = "http://" + c.Request.Host + "/static/video/" + finalName
-	// 视频标题
-	video.Title = c.PostForm("title")
-	// 视频添加时间
-	video.AddTime = time.Now().Unix()
-	// 将视频信息插入数据库
+	video := model.Video{
+		UserID:        int64(userid),
+		CoverURL:      "http://" + c.Request.Host + "/static/img/" + outputName,
+		CommentCount:  0,
+		FavoriteCount: 0,
+		PlayURL:       "http://" + c.Request.Host + "/static/video/" + finalName,
+		Title:         c.PostForm("title"),
+	}
 	err = model.CreateAVideo(&video)
 	if err != nil {
 		c.JSON(http.StatusOK, serializer.ActionResponse{
