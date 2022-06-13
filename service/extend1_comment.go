@@ -20,8 +20,10 @@ func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.
 		Name:          user.UserName,
 	}
 	// 获取评论数
-	commentNums, err := model.NewVideoClDaoInstance().QueryByVideoId(int64(req.VideoId))
-	if req.ActionType == 1 { // 添加评论
+	newV := model.NewVideoClDaoInstance()
+	newV.AddComment(int64(req.VideoId))               // 先更新冗余表
+	num, _ := newV.QueryByVideoId(int64(req.VideoId)) // 拿到最新的评论数
+	if req.ActionType == 1 {                          // 添加评论
 		comment = serializer.Comment{
 			Content:    req.CommentText,
 			CreateDate: time.Now().Format("2006-01-02 15:04:05"),
@@ -33,10 +35,10 @@ func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.
 			VideoId:    int64(req.VideoId),
 			UserId:     int64(userId),
 			Content:    req.CommentText,
-			DiggCount:  int32(commentNums.CommentCount + 1), // 发表评论的时候视频的评论数要++，先搞一个冗余表，读取到冗余表的评论数++ 然后在赋值到video表，之后再改成消息队列的形式
-			CreateTime: comment.CreateDate,                  // 时间保持一致
+			DiggCount:  int32(num.CommentCount), // 最新值，之后再改成消息队列的形式
+			CreateTime: comment.CreateDate,      // 时间保持一致
 		}
-		if err = model.NewPostDaoInstance().CreatePost(&post); err != nil {
+		if err := model.NewPostDaoInstance().CreatePost(&post); err != nil {
 			util.Log().Error("添加评论失败:", err)
 		}
 	} else {
@@ -48,7 +50,7 @@ func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.
 	return &resp
 }
 
-func CommentListService(req *serializer.CommentListRequest) *serializer.CommListResponse {
+func CommentListService(req *serializer.CommentListRequest, userId int) *serializer.CommListResponse {
 	var resp serializer.CommListResponse
 	videoId := req.VideoId
 	//查表操作
@@ -56,13 +58,21 @@ func CommentListService(req *serializer.CommentListRequest) *serializer.CommList
 	if err != nil {
 		util.Log().Error("查询失败:", err)
 	}
+	user, _ := model.GetUser(userId)
+	tmpUser := serializer.User{
+		FollowCount:   user.FollowCount,
+		FollowerCount: user.FollowerCount,
+		ID:            int64(user.ID),
+		IsFollow:      false,
+		Name:          user.UserName,
+	}
 	var commentTmp1 []*serializer.Comment
 	for _, v := range commentList {
 		commentTmp := serializer.Comment{
 			Content:    v.Content,
 			CreateDate: v.CreateTime,
 			ID:         v.Id,
-			User:       serializer.User{},
+			User:       tmpUser,
 		}
 		commentTmp1 = append(commentTmp1, &commentTmp)
 	}
