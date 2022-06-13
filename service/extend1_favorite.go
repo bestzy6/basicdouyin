@@ -11,10 +11,12 @@ func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse
 	var resp serializer.LikesResponse
 	vid := req.VideoId
 	newV := model.NewVideoClDaoInstance()
-	newV.AddComment(int64(vid)) // 更新冗余表的评论总数
+	newV.AddFavorite(int64(vid)) // 更新冗余表的点赞总数
 	num, _ := newV.QueryByVideoId(int64(vid))
 	// 更新video 表的评论总数字段
 	// 调用下佳佳更新video表就完事了         这样一个一个更新影响效率
+	videoDao := model.NewVideoDaoInstance()
+	videoDao.AddFavorite(int64(vid))
 
 	if req.ActionType == 1 { //点赞操作
 		fPost := model.FavoritePost{
@@ -28,6 +30,8 @@ func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse
 	} else {
 		if err := newV.DeFavorite(int64(vid)); err != nil { // 根据给定的条件更新单个属性
 			util.Log().Error("取消点赞失败:", err)
+		} else {
+			videoDao.DeleteFavorite(int64(vid))
 		}
 	}
 	resp.StatusCode = serializer.OK

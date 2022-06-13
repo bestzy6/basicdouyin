@@ -1,6 +1,9 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"sync"
+)
 
 type Video struct {
 	ID            int64  `gorm:"column:id;AUTO_INCREMENT"` // 视频唯一标识
@@ -11,6 +14,22 @@ type Video struct {
 	PlayURL       string // 视频播放地址
 	Title         string // 视频标题
 	AddTime       int64  // 视频添加时间
+}
+
+type VideoDao struct {
+}
+
+var (
+	videoDao     *VideoDao
+	videoDaoOnce sync.Once
+)
+
+func NewVideoDaoInstance() *VideoDao {
+	videoDaoOnce.Do(
+		func() {
+			videoDao = &VideoDao{}
+		})
+	return videoDao
 }
 
 func CreateAVideo(video *Video) (err error) {
@@ -32,25 +51,25 @@ func QueryVideoListByUserID(userid int) ([]*Video, error) {
 }
 
 // AddComment 增加评论
-func (video *Video) AddComment(toVideo *Video) error {
-	err := DB.Where("id=?", video.ID).UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).Error
+func (v *VideoDao) AddComment(vid int64) error {
+	err := DB.Where("id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).Error
 	return err
 }
 
 // DeleteComment 删除评论
-func (video *Video) DeleteComment(toVideo *Video) error {
-	err := DB.Where("id=?", video.ID).UpdateColumn("comment_count", gorm.Expr("comment_count - ?", 1)).Error
+func (v *VideoDao) DeleteComment(vid int64) error {
+	err := DB.Where("id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count - ?", 1)).Error
 	return err
 }
 
 // AddFavorite 点赞
-func (video *Video) AddFavorite(toVideo *Video) error {
-	err := DB.Where("id=?", video.ID).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error
+func (v *VideoDao) AddFavorite(vid int64) error {
+	err := DB.Where("id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error
 	return err
 }
 
 // DeleteFavorite 取消点赞
-func (video *Video) DeleteFavorite(toVideo *Video) error {
-	err := DB.Where("id=?", video.ID).UpdateColumn("favorite_count", gorm.Expr("favorite_count - ?", 1)).Error
+func (v *VideoDao) DeleteFavorite(vid int64) error {
+	err := DB.Where("id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count - ?", 1)).Error
 	return err
 }

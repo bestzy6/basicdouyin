@@ -2,17 +2,16 @@ package model
 
 import (
 	"fmt"
-	"os"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	if err := Init(); err != nil {
-		os.Exit(1)
-	}
-	fmt.Println("数据库连接成功")
-	m.Run()
-}
+//func TestMain(m *testing.M) {
+//	if err := Init(); err != nil {
+//		os.Exit(1)
+//	}
+//	fmt.Println("数据库连接成功")
+//	m.Run()
+//}
 
 func TestFavoriteGetVideoIdByUserId(t *testing.T) {
 	post := FavoritePost{
