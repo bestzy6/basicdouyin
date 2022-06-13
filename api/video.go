@@ -51,7 +51,12 @@ func PublishVideo(c *gin.Context) {
 	reader := util.ReadFrameAsJpeg(saveFile, 1)
 	img, err := imaging.Decode(reader)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("decode", err.Error())
+		c.JSON(http.StatusOK, serializer.ActionResponse{
+			StatusCode: serializer.ParamInvalid,
+			StatusMsg:  "请求参数错误",
+		})
+		return
 	}
 	// 通过UUID生成唯一的视频封面名
 	name := uuid.NewUUID()
