@@ -8,26 +8,27 @@ import (
 
 // FavoritePostService 点赞操作
 func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse {
-	// 先验证token
 	var resp serializer.LikesResponse
 	vid := req.VideoId
-	commentNums, _ := model.NewVideoClDaoInstance().QueryByVideoId(int64(vid))
+	newV := model.NewVideoClDaoInstance()
+	newV.AddComment(int64(vid)) // 更新冗余表的评论总数
+	num, _ := newV.QueryByVideoId(int64(vid))
+	// 更新video 表的评论总数字段
+	// 调用下佳佳更新video表就完事了         这样一个一个更新影响效率
 
-	//vidObj, _ := model.QueryByVideoId(int64(vid)) //需要一个查询根据videoId 查询
-	//vidObj.FavoriteCount = commentNums.FavoriteCount
-
-	// 更新表的点赞总数
 	if req.ActionType == 1 { //点赞操作
 		fPost := model.FavoritePost{
 			UserId:    1, // 根据token 获得 user_id
 			VideoId:   int64(req.VideoId),
-			DiggCount: int32(commentNums.FavoriteCount + 1), // 这个怎么++呢 ，对应视频的点赞数++，根据video_id 找到对应的视频，然后把那个属性更新
+			DiggCount: int32(num.FavoriteCount),
 		}
 		if err := model.NewFavoritePostDaoInstance().CreateFPost(&fPost); err != nil {
 			util.Log().Error("点赞失败:", err)
 		}
-	} else { //取消点赞
-
+	} else {
+		if err := newV.DeFavorite(int64(vid)); err != nil { // 根据给定的条件更新单个属性
+			util.Log().Error("取消点赞失败:", err)
+		}
 	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "点赞成功"
@@ -36,7 +37,6 @@ func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse
 
 // FavoriteListService 获取点赞列表
 func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListResponse {
-	// 验证token
 	var resp serializer.LikeListResponse
 	userId := req.UserId
 	favoritePostDao := model.NewFavoritePostDaoInstance()

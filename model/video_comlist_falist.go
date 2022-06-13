@@ -2,6 +2,7 @@ package model
 
 import (
 	"basictiktok/util"
+	"gorm.io/gorm"
 	"sync"
 )
 
@@ -30,7 +31,7 @@ func NewVideoClDaoInstance() *VideoClDao {
 		})
 	return videoClDao
 }
-func (v VideoClDao) QueryByVideoId(videoId int64) (*VideoCL, error) {
+func (v *VideoClDao) QueryByVideoId(videoId int64) (*VideoCL, error) {
 	var video VideoCL
 	err := DB.Table("douyin.videoCL").Where("video_id = ?", videoId).Find(&video).Error
 	if err != nil {
@@ -38,4 +39,22 @@ func (v VideoClDao) QueryByVideoId(videoId int64) (*VideoCL, error) {
 		return nil, err
 	}
 	return &video, nil
+}
+
+// DeFavorite 点赞-1
+func (v *VideoClDao) DeFavorite(vid int64) error {
+	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("favorite_count", gorm.Expr("follower_count - ?", 1)).Error
+	return err
+}
+
+// AddFavorite 点赞+1
+func (v *VideoClDao) AddFavorite(vid int64) error {
+	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("favorite_count", gorm.Expr("follower_count + ?", 1)).Error
+	return err
+}
+
+// AddComment 评论数+1
+func (v *VideoClDao) AddComment(vid int64) error {
+	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).Error
+	return err
 }

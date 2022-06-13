@@ -22,11 +22,19 @@ func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterRespon
 		return &resp
 	}
 
+	// 通过用户名查询新建用户的信息
+	newUser, err := model.QueryAUser(user.UserName)
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = "未知错误"
+		return &resp
+	}
+
 	// 返回用户注册消息
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	resp.Token = "token"
-	resp.UserID = int64(user.ID)
+	resp.UserID = int64(newUser.ID)
 	return &resp
 }
 
@@ -34,7 +42,7 @@ func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterRespon
 func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 
 	var resp serializer.LoginResponse
-	user, err := model.QueryUserByName(req.UserName)
+	user, err := model.QueryAUser(req.UserName)
 	if err != nil {
 		resp.StatusCode = serializer.UserNotExisted
 		resp.StatusMsg = "用户名错误"
@@ -59,7 +67,7 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 // QueryUserInfoService 用户查询
 func QueryUserInfoService(req *serializer.UserInfoRequest) *serializer.UserInfoResponse {
 	var resp serializer.UserInfoResponse
-	user, err := model.QueryUserByID(int64(req.UserId))
+	user, err := model.QueryUser(int64(req.UserId))
 	if err != nil {
 		resp.StatusCode = serializer.ParamInvalid
 		resp.StatusMsg = "用户id错误"

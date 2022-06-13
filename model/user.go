@@ -9,8 +9,8 @@ import (
 
 // User 用户模型
 type User struct {
-	ID             int    `gorm:"column:id;AUTO_INCREMENT"`
-	UserName       string `gorm:"unique"` //用户名
+	gorm.Model
+	UserName       string //用户名
 	PasswordDigest string // 用户密码
 	Nickname       string // 用户昵称
 	Status         string // 用户状态
@@ -30,14 +30,14 @@ const (
 	Suspend string = "suspend"
 )
 
-// 创建一个新用户
+// CreateAUser 创建一个新用户
 func CreateAUser(user *User) (err error) {
 	err = DB.Create(&user).Error
 	return
 }
 
-// 通过用户名查询用户信息
-func QueryUserByName(username string) (user *User, err error) {
+// QueryAUser 通过用户名查询用户信息
+func QueryAUser(username string) (user *User, err error) {
 	user = new(User)
 	if err = DB.Debug().Where("username=?", username).Find(user).Error; err != nil {
 		return nil, err
@@ -45,8 +45,8 @@ func QueryUserByName(username string) (user *User, err error) {
 	return user, nil
 }
 
-// 通过用户id查询用户信息
-func QueryUserByID(id int64) (User, error) {
+// QueryUser 通过用户id查询用户信息
+func QueryUser(id int64) (User, error) {
 	var user User
 	result := DB.First(&user, id)
 	return user, result.Error

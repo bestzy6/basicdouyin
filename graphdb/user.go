@@ -165,7 +165,7 @@ func (u User) UnFollow(target *User) error {
 	return err
 }
 
-// Followers 关注列表，requestor的ID必填，requestor是请求发起人
+// Followers 关注列表，requestor的ID必填
 func (u User) Followers(requestor *User) (map[int]*User, error) {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -218,7 +218,7 @@ func (u User) Followers(requestor *User) (map[int]*User, error) {
 	return users, err
 }
 
-// Followees 粉丝列表，requestor的ID必填，requestor是请求发起人
+// Followees 粉丝列表，requestor的ID必填
 func (u User) Followees(requestor *User) (map[int]*User, error) {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -229,6 +229,7 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 	}(session)
 	//
 	users := make(map[int]*User)
+	//users := make([]*User, 0, u.FollowerCount)
 	_, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 		//获取关注u的人
 		result, err := tx.Run("MATCH (a:Users{id:$ID})<-[:follow]-(b:Users) "+
@@ -241,14 +242,15 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 			tx.Rollback()
 			return nil, err
 		}
+		if result.Err() != nil {
+			tx.Rollback()
+			return nil, result.Err()
+		}
 		for result.Next() {
 			record := result.Record()
 			user := u.record2User(record, "b")
 			users[user.ID] = user
-		}
-		if result.Err() != nil {
-			tx.Rollback()
-			return nil, result.Err()
+			//users = append(users, user)
 		}
 		//获取是u的粉丝，且是requestor关注的人
 		result, err = tx.Run("MATCH (a:Users{id:$ID})<-[:follow]-(c:Users)<-[:follow]-(b:Users{id:$RID})"+
@@ -280,96 +282,7 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 	return users, err
 }
 
-// MyFollowers 关注列表，无请求人参数
-func (u User) MyFollowers() (map[int]*User, error) {
-	session := newSession()
-	defer func(session neo4j.Session) {
-		err := session.Close()
-		if err != nil {
-			util.Log().Error("close session err", err)
-		}
-	}(session)
-	//
-	result, err := session.Run("MATCH (a:Users{id:$ID})-[:follow]->(b:Users) "+
-		"RETURN b",
-		map[string]interface{}{
-			"ID": u.ID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	users := make(map[int]*User)
-	for result.Next() {
-		record := result.Record()
-		user := u.record2User(record, "b")
-		user.IsFollow = true
-		users[user.ID] = user
-	}
-	return users, nil
-}
-
-// MyFollowees 粉丝列表，无请求人参数
-func (u User) MyFollowees() (map[int]*User, error) {
-	session := newSession()
-	defer func(session neo4j.Session) {
-		err := session.Close()
-		if err != nil {
-			util.Log().Error("close session err", err)
-		}
-	}(session)
-	//
-	users := make(map[int]*User)
-	_, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
-		result, err := tx.Run("MATCH (a:Users{id:$ID})<-[:follow]-(b:Users) "+
-			"RETURN b",
-			map[string]interface{}{
-				"ID": u.ID,
-			},
-		)
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-		users = make(map[int]*User)
-		for result.Next() {
-			record := result.Record()
-			user := u.record2User(record, "b")
-			users[user.ID] = user
-		}
-		if result.Err() != nil {
-			tx.Rollback()
-			return nil, result.Err()
-		}
-		//
-		result, err = tx.Run("MATCH (a:Users{id:$ID})-[:follow]->(b:Users) "+
-			"RETURN b",
-			map[string]interface{}{
-				"ID": u.ID,
-			},
-		)
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-		for result.Next() {
-			record := result.Record()
-			user := u.record2User(record, "b")
-			if v, ok := users[user.ID]; ok {
-				v.IsFollow = true
-			}
-		}
-		if result.Err() != nil {
-			tx.Rollback()
-			return nil, result.Err()
-		}
-		tx.Commit()
-		return nil, nil
-	})
-	return users, err
-}
-
-// Deprecated:HasFollow 判断是否关注，，target的ID必填，true为已关注，false为未关注
+// HasFollow 判断是否关注，，target的ID必填，true为已关注，false为未关注
 func (u User) HasFollow(target *User) (bool, error) {
 	session := newSession()
 	defer func(session neo4j.Session) {
@@ -409,34 +322,4 @@ func (u User) record2User(record *neo4j.Record, key string) *User {
 		FollowCount:   int(node.Props["follow"].(int64)),
 		FollowerCount: int(node.Props["follower"].(int64)),
 	}
-}
-
-// IsFollow 判断是否关注
-func IsFollow(src, target int) (bool, error) {
-	session := newSession()
-	defer func(session neo4j.Session) {
-		err := session.Close()
-		if err != nil {
-			util.Log().Error("close session err", err)
-		}
-	}(session)
-	//
-	result, err := session.Run(
-		"MATCH (a:Users{id:$AID})-[rel:follow]->(b:Users{id:$BID}) "+
-			"RETURN COUNT(rel)",
-		map[string]interface{}{
-			"AID": src,
-			"BID": target,
-		})
-	if err != nil {
-		util.Log().Error("HasFollow执行出错！", err)
-		return false, err
-	}
-	record, err := result.Single()
-	if err != nil {
-		util.Log().Error("HasFollow执行出错！", err)
-		return false, err
-	}
-	n, _ := record.Get("COUNT(rel)")
-	return n.(int64) > 0, nil
 }
