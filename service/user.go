@@ -1,6 +1,7 @@
 package service
 
 import (
+	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
 	"basictiktok/server/middleware"
@@ -30,6 +31,13 @@ func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterRespon
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
+	//添加信息至图数据库
+	graphUser := model2graph(&user)
+	err = graphUser.Create()
+	if err != nil {
+		util.Log().Error("创建图用户失败！", err)
+	}
+	//
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	resp.Token = token
@@ -88,4 +96,15 @@ func QueryUserInfoService(req *serializer.UserInfoRequest) *serializer.UserInfoR
 	// 这个需要查询用户关注信息
 	resp.User.IsFollow = true
 	return &resp
+}
+
+// model的用户转换为graphdb的用户
+func model2graph(user *model.User) *graphdb.User {
+	toUser := &graphdb.User{
+		ID:            user.ID,
+		Name:          user.UserName,
+		FollowCount:   int(user.FollowCount),
+		FollowerCount: int(user.FollowerCount),
+	}
+	return toUser
 }

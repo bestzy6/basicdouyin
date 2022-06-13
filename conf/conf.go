@@ -4,6 +4,7 @@ import (
 	"basictiktok/cache"
 	"basictiktok/graphdb"
 	"basictiktok/model"
+	"basictiktok/mq"
 	"basictiktok/util"
 	"os"
 
@@ -26,4 +27,7 @@ func Init() {
 	model.Database(os.Getenv("MYSQL_DSN"))
 	cache.Redis()
 	graphdb.Neo4j()
+
+	//消息队列
+	mq.InitMQ()
 }
