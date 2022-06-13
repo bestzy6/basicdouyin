@@ -1,6 +1,7 @@
 package model
 
 import (
+	"basictiktok/util"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -78,18 +79,16 @@ func (user *User) CheckPassword(password string) bool {
 // Follow 关注
 func (user *User) Follow(toUser *User) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
-		tx.Begin()
-		err := tx.Model(user).Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
+		err := tx.Model(user).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
 		if err != nil {
-			tx.Rollback()
+			util.Log().Error("mysql follow错误1\n", err)
 			return err
 		}
-		err = DB.Model(user).Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error
+		err = DB.Model(toUser).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error
 		if err != nil {
-			tx.Rollback()
+			util.Log().Error("mysql follow错误2\n", err)
 			return err
 		}
-		tx.Commit()
 		return nil
 	})
 	return err
@@ -98,18 +97,16 @@ func (user *User) Follow(toUser *User) error {
 // UnFollow 取消关注
 func (user *User) UnFollow(toUser *User) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
-		tx.Begin()
-		err := tx.Model(user).Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
+		err := tx.Model(user).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
 		if err != nil {
-			tx.Rollback()
+			util.Log().Error("mysql unfollow错误1\n", err)
 			return err
 		}
-		err = tx.Model(user).Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count - ?", 1)).Error
+		err = tx.Model(toUser).UpdateColumn("follower_count", gorm.Expr("follower_count - ?", 1)).Error
 		if err != nil {
-			tx.Rollback()
+			util.Log().Error("mysql unfollow错误2\n", err)
 			return err
 		}
-		tx.Commit()
 		return nil
 	})
 	return err

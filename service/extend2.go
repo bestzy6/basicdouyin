@@ -4,6 +4,7 @@ import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
+	"basictiktok/util"
 )
 
 // FollowService 关注服务（还需要添加对数据库的操作）
@@ -18,6 +19,7 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 		err = user.UnFollow(&targetUser)
 	}
 	if err != nil {
+		util.Log().Error("neo4j关注错误\n", err)
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
 		return &resp
@@ -25,9 +27,12 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	modelUser := graph2model(&user)
 	modelToUser := graph2model(&targetUser)
 	if req.ActionType == 1 {
-		modelUser.Follow(modelToUser)
+		err = modelUser.Follow(modelToUser)
 	} else {
-		modelUser.UnFollow(modelToUser)
+		err = modelUser.UnFollow(modelToUser)
+	}
+	if err != nil {
+		util.Log().Error("mysql关注错误\n", err)
 	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
