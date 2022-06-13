@@ -51,8 +51,8 @@ type LoginResponse struct {
 
 // LoginRequest 用户登入输入
 type LoginRequest struct {
-	UserName       string `form:"user_name" json:"user_name" binding:"required"`             // 用户名
-	PasswordDigest string `form:"password_digest" json:"password_digest" binding:"required"` // 用户密码
+	UserName string `form:"username" json:"user_name" binding:"required"` // 用户名
+	Password string `form:"password" json:"password" binding:"required"`  // 用户密码
 }
 
 // RegisterResponse 用户注册响应

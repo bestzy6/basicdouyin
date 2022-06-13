@@ -3,6 +3,7 @@ package api
 import (
 	"basictiktok/model"
 	"basictiktok/serializer"
+	"basictiktok/server/middleware"
 	"basictiktok/service"
 	"basictiktok/util"
 	"fmt"
@@ -114,7 +115,15 @@ func VideoList(c *gin.Context) {
 		})
 		return
 	}
-	resp := service.FindVideoBeforeTimeService(&req)
+	userid := 0
+	token, exist := c.GetQuery("token")
+	if exist {
+		claims, err := middleware.ParseToken(token)
+		if err == nil {
+			userid = claims.UserID
+		}
+	}
+	resp := service.FindVideoBeforeTimeService(&req, userid)
 	c.JSON(http.StatusOK, resp)
 }
 

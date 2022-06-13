@@ -11,12 +11,15 @@ func AuthToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, exist := c.GetQuery("token")
 		if !exist {
-			c.JSON(http.StatusOK, gin.H{
-				"status_code": serializer.ParamInvalid,
-				"status_msg":  "参数错误！",
-			})
-			c.Abort()
-			return
+			token, exist = c.GetPostForm("token")
+			if !exist {
+				c.JSON(http.StatusOK, gin.H{
+					"status_code": serializer.ParamInvalid,
+					"status_msg":  "参数错误！",
+				})
+				c.Abort()
+				return
+			}
 		}
 		claims, err := ParseToken(token)
 		if err != nil {

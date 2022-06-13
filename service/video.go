@@ -4,25 +4,14 @@ import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
-	"basictiktok/server/middleware"
 )
 
-func FindVideoBeforeTimeService(req *serializer.FeedRequest) *serializer.FeedResponse {
+func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serializer.FeedResponse {
 
 	var resp serializer.FeedResponse
 	var videoList []serializer.Video
 	var user model.User
-	// 判断是否携带用户token
-	if req.Token != "" {
-		userClaim, err := middleware.ParseToken(req.Token)
-		if err != nil {
-			resp.StatusCode = serializer.UnknownError
-			resp.StatusMsg = "未知错误"
-			return &resp
-		}
-		user.ID = userClaim.UserID
-
-	}
+	user.ID = userid
 	// 找出请求时间之前的30条视频信息返回
 	videos, err := model.FindVideoBeforeTime(req.LatestTime)
 	if err != nil {
@@ -59,7 +48,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest) *serializer.FeedRes
 			uper.IsFollow = isFollow
 
 			// 判断是否点赞
-			videoRes.IsFavorite = isFollow
+			videoRes.IsFavorite = IsFavorite(int64(user.ID), videos[k].ID)
 		} else {
 			videoRes.IsFavorite = false
 		}
@@ -111,7 +100,8 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 	for k := range videos {
 		var videoRes serializer.Video
 		videoRes.Author = userRes
-		videoRes.IsFavorite = true
+		// 判断是否点赞
+		videoRes.IsFavorite = IsFavorite(int64(user.ID), videos[k].ID)
 		videoRes.Title = videos[k].Title
 		videoRes.PlayURL = videos[k].PlayURL
 		videoRes.CoverURL = videos[k].CoverURL

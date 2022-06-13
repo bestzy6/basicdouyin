@@ -11,7 +11,7 @@ import (
 func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.CommentResponse {
 	var resp serializer.CommentResponse
 	var comment serializer.Comment
-	user, _ := model.QueryUser(int64(userId))
+	user, _ := model.QueryUserByID(int64(userId))
 	userTmp := serializer.User{
 		FollowCount:   user.FollowCount,
 		FollowerCount: user.FollowerCount,

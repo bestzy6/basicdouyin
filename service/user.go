@@ -48,7 +48,7 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 		return &resp
 	}
 
-	passwordWithMD5 := util.PasswordWithMD5(req.PasswordDigest)
+	passwordWithMD5 := util.PasswordWithMD5(req.Password)
 	if passwordWithMD5 != user.Password {
 		resp.StatusCode = serializer.WrongPassword
 		resp.StatusMsg = "密码错误"

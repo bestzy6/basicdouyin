@@ -39,7 +39,7 @@ func CreateAUser(user *User) (err error) {
 // 通过用户名查询用户信息
 func QueryUserByName(username string) (user *User, err error) {
 	user = new(User)
-	if err = DB.Debug().Where("username=?", username).Find(user).Error; err != nil {
+	if err = DB.Debug().Where("user_name=?", username).Find(&user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
