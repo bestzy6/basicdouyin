@@ -323,3 +323,33 @@ func (u User) record2User(record *neo4j.Record, key string) *User {
 		FollowerCount: int(node.Props["follower"].(int64)),
 	}
 }
+
+// IsFollow 判断是否关注
+func IsFollow(src, target int) (bool, error) {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	result, err := session.Run(
+		"MATCH (a:Users{id:$AID})-[rel:follow]->(b:Users{id:$BID}) "+
+			"RETURN COUNT(rel)",
+		map[string]interface{}{
+			"AID": src,
+			"BID": target,
+		})
+	if err != nil {
+		util.Log().Error("HasFollow执行出错！", err)
+		return false, err
+	}
+	record, err := result.Single()
+	if err != nil {
+		util.Log().Error("HasFollow执行出错！", err)
+		return false, err
+	}
+	n, _ := record.Get("COUNT(rel)")
+	return n.(int64) > 0, nil
+}

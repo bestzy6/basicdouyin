@@ -52,24 +52,24 @@ func QueryVideoListByUserID(userid int) ([]*Video, error) {
 
 // AddComment 增加评论
 func (v *VideoDao) AddComment(vid int64) error {
-	err := DB.Where("id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).Error
+	err := DB.Model(&Video{}).Where("id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).Error
 	return err
 }
 
 // DeleteComment 删除评论
 func (v *VideoDao) DeleteComment(vid int64) error {
-	err := DB.Where("id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count - ?", 1)).Error
+	err := DB.Model(&Video{}).Where("id=?", vid).UpdateColumn("comment_count", gorm.Expr("comment_count - ?", 1)).Error
 	return err
 }
 
 // AddFavorite 点赞
 func (v *VideoDao) AddFavorite(vid int64) error {
-	err := DB.Where("id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error
+	err := DB.Model(&Video{}).Where("id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error
 	return err
 }
 
 // DeleteFavorite 取消点赞
 func (v *VideoDao) DeleteFavorite(vid int64) error {
-	err := DB.Where("id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count - ?", 1)).Error
+	err := DB.Model(&Video{}).Where("id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count - ?", 1)).Error
 	return err
 }

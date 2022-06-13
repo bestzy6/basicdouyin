@@ -28,11 +28,11 @@ type LikeListResponse struct {
 
 // CommentRequest 评论请求
 type CommentRequest struct {
-	Token       string `form:"token" json:"token" binding:"required"`               //用户鉴权token
-	VideoId     int    `form:"video_id" json:"video_id" binding:"required"`         //视频id
-	ActionType  int    `form:"action_type" json:"action_type" binding:"required"`   //1-发布评论，2-删除评论
-	CommentText string `form:"comment_text" json:"comment_text" binding:"required"` //用户填写的评论内容，在action_type=1的时候使用
-	CommentId   int    `form:"comment_id" json:"comment_id" binding:"required"`     // 要删除的评论id，在action_type=2的时候使用
+	Token       string `form:"token" json:"token" binding:"required"`             //用户鉴权token
+	VideoId     int    `form:"video_id" json:"video_id" binding:"required"`       //视频id
+	ActionType  int    `form:"action_type" json:"action_type" binding:"required"` //1-发布评论，2-删除评论
+	CommentText string `form:"comment_text" json:"comment_text"`                  //用户填写的评论内容，在action_type=1的时候使用
+	CommentId   int    `form:"comment_id" json:"comment_id"`                      // 要删除的评论id，在action_type=2的时候使用
 }
 
 // CommentResponse 评论操作

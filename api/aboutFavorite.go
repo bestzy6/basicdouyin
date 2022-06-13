@@ -36,6 +36,8 @@ func FavoriteList(c *gin.Context) {
 		})
 		return
 	}
-	resp := service.FavoriteListService(&req)
+	reqUserId, _ := c.Get("userid")
+	i := reqUserId.(int)
+	resp := service.FavoriteListService(&req, i)
 	c.JSON(http.StatusOK, resp)
 }

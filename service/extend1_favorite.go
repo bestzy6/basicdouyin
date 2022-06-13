@@ -1,6 +1,7 @@
 package service
 
 import (
+	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
 	"basictiktok/util"
@@ -40,7 +41,7 @@ func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse
 }
 
 // FavoriteListService 获取点赞列表
-func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListResponse {
+func FavoriteListService(req *serializer.LikeListRequest, myUserId int) *serializer.LikeListResponse {
 	var resp serializer.LikeListResponse
 	userId := req.UserId
 	favoritePostDao := model.NewFavoritePostDaoInstance()
@@ -54,9 +55,19 @@ func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListRe
 		util.Log().Error("获取点赞列表失败:", err)
 	}
 	var videoTmpIndex []*serializer.Video
+
 	for _, result := range results {
+		userTmp, _ := model.GetUser(result.UserID)
+		user := serializer.User{
+			FollowCount:   userTmp.FollowCount,
+			FollowerCount: userTmp.FollowerCount,
+			ID:            int64(userTmp.ID),
+			Name:          userTmp.UserName,
+		}
+		user.IsFollow, _ = graphdb.IsFollow(myUserId, userTmp.ID)
+		// 通过token获取你的userid，判断你是否关注这个视频作者
 		videoTmp := serializer.Video{
-			Author:        serializer.User{},
+			Author:        user,
 			CommentCount:  result.CommentCount,
 			CoverURL:      result.CoverURL,
 			FavoriteCount: result.FavoriteCount,
@@ -67,10 +78,12 @@ func FavoriteListService(req *serializer.LikeListRequest) *serializer.LikeListRe
 		}
 		videoTmpIndex = append(videoTmpIndex, &videoTmp)
 	}
+
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "查询点赞列表成功"
 	resp.VideoList = videoTmpIndex
 	return &resp
+
 }
 
 // IsFavorite 获取用户点赞的视频
