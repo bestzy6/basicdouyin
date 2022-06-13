@@ -2,6 +2,7 @@ package service
 
 import (
 	"basictiktok/graphdb"
+	"basictiktok/model"
 	"basictiktok/serializer"
 )
 
@@ -20,6 +21,13 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
 		return &resp
+	}
+	modelUser := graph2model(&user)
+	modelToUser := graph2model(&targetUser)
+	if req.ActionType == 1 {
+		modelUser.Follow(modelToUser)
+	} else {
+		modelUser.UnFollow(modelToUser)
 	}
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
@@ -84,4 +92,14 @@ func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesRes
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = ""
 	return &resp
+}
+
+func graph2model(user *graphdb.User) *model.User {
+	toUser := &model.User{
+		ID:            user.ID,
+		UserName:      user.Name,
+		FollowCount:   int64(user.FollowCount),
+		FollowerCount: int64(user.FollowerCount),
+	}
+	return toUser
 }

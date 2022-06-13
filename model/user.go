@@ -79,12 +79,12 @@ func (user *User) CheckPassword(password string) bool {
 func (user *User) Follow(toUser *User) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		tx.Begin()
-		err := tx.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
+		err := tx.Model(user).Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", 1)).Error
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
-		err = DB.Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error
+		err = DB.Model(user).Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", 1)).Error
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -99,12 +99,12 @@ func (user *User) Follow(toUser *User) error {
 func (user *User) UnFollow(toUser *User) error {
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		tx.Begin()
-		err := tx.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
+		err := tx.Model(user).Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follow_count - ?", 1)).Error
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
-		err = tx.Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count - ?", 1)).Error
+		err = tx.Model(user).Where("id=?", user.ID).UpdateColumn("follower_count", gorm.Expr("follower_count - ?", 1)).Error
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -112,11 +112,5 @@ func (user *User) UnFollow(toUser *User) error {
 		tx.Commit()
 		return nil
 	})
-	return err
-}
-
-// DecreFollowee 粉丝数-1
-func (user *User) DecreFollowee() error {
-	err := DB.Where("id=?", user.ID).UpdateColumn("follow_count", gorm.Expr("follower_count - ?", 1)).Error
 	return err
 }
