@@ -3,6 +3,7 @@ package server
 import (
 	"basictiktok/api"
 	"basictiktok/server/middleware"
+	"basictiktok/util"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,8 +11,8 @@ import (
 func NewRouter() *gin.Engine {
 	r := gin.Default()
 	//存放截图和地址的位置
-	r.Static("/static/img", "./static/img")
-	r.Static("/static/video", "./static/video")
+	r.Static("/static/img", util.IMG)
+	r.Static("/static/video", util.VEDIO)
 	// 中间件
 	r.Use(middleware.Cors())
 

@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+var (
+	IMG   = "./static/img"
+	VEDIO = "./static/video"
+)
+
 // RandStringRunes 返回随机字符串
 func RandStringRunes(n int) string {
 	var letterRunes = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -31,7 +36,7 @@ func PasswordWithMD5(password string) string {
 	return md5str
 }
 
-// 从视频中截取指定帧
+// ReadFrameAsJpeg 从视频中截取指定帧
 func ReadFrameAsJpeg(inFileName string, frameNum int) io.Reader {
 	buf := bytes.NewBuffer(nil)
 	err := ffmpeg.Input(inFileName).

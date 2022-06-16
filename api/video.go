@@ -29,8 +29,8 @@ func PublishVideo(c *gin.Context) {
 	}
 
 	// 获取视频以及图片存储目录
-	video_dictory := "./static/video/"
-	picture_dictory := "./static/img/"
+	video_dictory := util.VEDIO
+	picture_dictory := util.IMG
 
 	filename := filepath.Base(data.Filename)
 	// 通过token获取登录用户id
