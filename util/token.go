@@ -1,7 +1,6 @@
-package middleware
+package util
 
 import (
-	"basictiktok/util"
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
@@ -32,7 +31,7 @@ func ParseToken(token string) (*UserClaims, error) {
 		return jwtSecret, nil
 	})
 	if err != nil {
-		util.Log().Error("解析token出错\n", err)
+		Log().Error("解析token出错\n", err)
 		return nil, err
 	}
 	if claims, ok := tokenClaims.Claims.(*UserClaims); ok && tokenClaims.Valid {

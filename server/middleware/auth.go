@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"basictiktok/serializer"
+	"basictiktok/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -21,7 +22,7 @@ func AuthToken() gin.HandlerFunc {
 				return
 			}
 		}
-		claims, err := ParseToken(token)
+		claims, err := util.ParseToken(token)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"status_code": serializer.PermDenied,

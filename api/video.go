@@ -2,8 +2,8 @@ package api
 
 import (
 	"basictiktok/serializer"
-	"basictiktok/server/middleware"
 	"basictiktok/service"
+	"basictiktok/util"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -37,7 +37,7 @@ func VideoList(c *gin.Context) {
 	userid := 0
 	token, exist := c.GetQuery("token")
 	if exist {
-		claims, err := middleware.ParseToken(token)
+		claims, err := util.ParseToken(token)
 		if err == nil {
 			userid = claims.UserID
 		}

@@ -4,28 +4,27 @@ import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
-	"basictiktok/server/middleware"
 	"basictiktok/util"
 )
 
 // RegisterService 用户注册
 func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterResponse {
 	var resp serializer.RegisterResponse
-	var user model.User
-	user.UserName = req.Username
-	// 获取md5加密后的密码
-	user.Password = util.PasswordWithMD5(req.Password)
-	user.Nickname = req.Nickname
+	user := model.User{
+		UserName: req.Username,
+		Password: util.PasswordWithMD5(req.Password),
+		Nickname: req.Nickname,
+	}
 
 	// 通过注册信息新建一个用户
-	if err := model.CreateAUser(&user); err != nil {
+	if err := user.Create(); err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
 
 	// 返回用户注册消息
-	token, err := middleware.CreateToken(user.ID)
+	token, err := util.CreateToken(user.ID)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -63,7 +62,7 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 		return &resp
 	}
 
-	token, err := middleware.CreateToken(user.ID)
+	token, err := util.CreateToken(user.ID)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -78,9 +77,9 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 }
 
 // QueryUserInfoService 用户查询
-func QueryUserInfoService(req *serializer.UserInfoRequest) *serializer.UserInfoResponse {
+func QueryUserInfoService(req *serializer.UserInfoRequest, userid int) *serializer.UserInfoResponse {
 	var resp serializer.UserInfoResponse
-	user, err := model.QueryUserByID(int64(req.UserId))
+	user, err := model.QueryUserByID(req.UserId)
 	if err != nil {
 		resp.StatusCode = serializer.ParamInvalid
 		resp.StatusMsg = "用户id错误"
@@ -94,7 +93,7 @@ func QueryUserInfoService(req *serializer.UserInfoRequest) *serializer.UserInfoR
 	resp.User.FollowCount = user.FollowCount
 	resp.User.FollowerCount = user.FollowerCount
 	// 这个需要查询用户关注信息
-	resp.User.IsFollow = true
+	resp.User.IsFollow, _ = graphdb.IsFollow(userid, int(req.UserId))
 	return &resp
 }
 

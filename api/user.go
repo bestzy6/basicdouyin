@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// 用户注册
+// Register 用户注册
 func Register(c *gin.Context) {
 	var req serializer.RegisterRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -21,7 +21,7 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// 用户登录
+// Login 用户登录
 func Login(c *gin.Context) {
 	var req serializer.LoginRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -35,7 +35,7 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// 查询用户信息
+// QueryUserInfo 查询用户信息
 func QueryUserInfo(c *gin.Context) {
 	var req serializer.UserInfoRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
@@ -45,6 +45,7 @@ func QueryUserInfo(c *gin.Context) {
 		})
 		return
 	}
-	resp := service.QueryUserInfoService(&req)
+	userid, _ := c.Get("userid")
+	resp := service.QueryUserInfoService(&req, userid.(int))
 	c.JSON(http.StatusOK, resp)
 }

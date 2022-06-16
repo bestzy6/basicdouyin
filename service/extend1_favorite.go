@@ -57,7 +57,7 @@ func FavoriteListService(req *serializer.LikeListRequest, myUserId int) *seriali
 	var videoTmpIndex []*serializer.Video
 
 	for _, result := range results {
-		userTmp, _ := model.GetUser(result.UserID)
+		userTmp, _ := model.QueryUserByID(result.UserID)
 		user := serializer.User{
 			FollowCount:   userTmp.FollowCount,
 			FollowerCount: userTmp.FollowerCount,

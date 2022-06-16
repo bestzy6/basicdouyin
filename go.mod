@@ -22,7 +22,6 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -41,7 +40,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/u2takey/ffmpeg-go v0.4.1
-	github.com/u2takey/go-utils v0.3.1
+	github.com/u2takey/go-utils v0.3.1 // indirect
 	golang.org/x/sys v0.0.0-20220408201424-a24fb2fb8a0f // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

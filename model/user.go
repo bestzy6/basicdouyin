@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//实例
+const PassWordCost = 12
 
 // User 用户模型
 type User struct {
@@ -20,44 +20,26 @@ type User struct {
 	FollowerCount int64  // 粉丝总数
 }
 
-const (
-	// PassWordCost 密码加密难度
-	PassWordCost = 12
-	// Active 激活用户
-	Active string = "active"
-	// Inactive 未激活用户
-	Inactive string = "inactive"
-	// Suspend 被封禁用户
-	Suspend string = "suspend"
-)
-
-// 创建一个新用户
-func CreateAUser(user *User) (err error) {
-	err = DB.Create(&user).Error
-	return
-}
-
-// 通过用户名查询用户信息
+// QueryUserByName 通过用户名查询用户信息
 func QueryUserByName(username string) (user *User, err error) {
 	user = new(User)
-	if err = DB.Debug().Where("user_name=?", username).Find(&user).Error; err != nil {
+	if err = DB.Where("user_name=?", username).Find(&user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-// 通过用户id查询用户信息
+// QueryUserByID 通过用户id查询用户信息
 func QueryUserByID(id int64) (User, error) {
 	var user User
 	result := DB.First(&user, id)
 	return user, result.Error
 }
 
-// GetUser 用ID获取用户
-func GetUser(ID interface{}) (User, error) {
-	var user User
-	result := DB.First(&user, ID)
-	return user, result.Error
+// Create 创建一个新用户
+func (user *User) Create() (err error) {
+	err = DB.Create(&user).Error
+	return
 }
 
 // SetPassword 设置密码

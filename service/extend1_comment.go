@@ -58,7 +58,7 @@ func CommentListService(req *serializer.CommentListRequest, userId int) *seriali
 	if err != nil {
 		util.Log().Error("查询失败:", err)
 	}
-	user, _ := model.GetUser(userId)
+	user, _ := model.QueryUserByID(int64(userId))
 	tmpUser := serializer.User{
 		FollowCount:   user.FollowCount,
 		FollowerCount: user.FollowerCount,
