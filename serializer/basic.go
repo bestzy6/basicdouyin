@@ -35,7 +35,6 @@ type UserInfoResponse struct {
 	User       User   `json:"user"`        // 用户信息
 }
 
-// UserInfoRequest 用户信息输入
 type UserInfoRequest struct {
 	Token  string `form:"token" json:"token" binding:"required"`     //用户鉴权token
 	UserId int64  `form:"user_id" json:"user_id" binding:"required"` //用户id
@@ -49,7 +48,6 @@ type LoginResponse struct {
 	UserID     int64  `json:"user_id"`     // 用户id
 }
 
-// LoginRequest 用户登入输入
 type LoginRequest struct {
 	UserName string `form:"username" json:"user_name" binding:"required"` // 用户名
 	Password string `form:"password" json:"password" binding:"required"`  // 用户密码
@@ -63,7 +61,6 @@ type RegisterResponse struct {
 	UserID     int64  `json:"user_id"`     // 用户id
 }
 
-// RegisterRequest 用户注册输入
 type RegisterRequest struct {
 	Username string `form:"username" json:"username" binding:"required"` // 用户名
 	Password string `form:"password" json:"password" binding:"required"` // 用户密码
@@ -78,7 +75,6 @@ type FeedResponse struct {
 	VideoList  []Video `json:"video_list"`  // 视频列表
 }
 
-// FeedRequset 视频流请求
 type FeedRequest struct {
 	LatestTime int64  `form:"lastet_time" json:"latest_time"` // 返回当前指定时间之前上传的视频视频
 	Token      string `form:"token" json:"token"`             //用户鉴权token

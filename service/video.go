@@ -4,6 +4,15 @@ import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
+	"basictiktok/util"
+	"github.com/disintegration/imaging"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serializer.FeedResponse {
@@ -116,4 +125,84 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	return &resp
+}
+
+func ActionService(req *serializer.ActionRequest, userid int, host string) *serializer.ActionResponse {
+	prefix := getFileName(userid)
+	split := strings.Split(filepath.Base(req.Data.Filename), ".")
+	saveVedioPath := filepath.Join(util.VEDIO, prefix+"."+split[1])
+	err := saveUploadedFile(req.Data, saveVedioPath)
+	if err != nil {
+		util.Log().Error("保存文件出错！\n", err)
+		return &serializer.ActionResponse{
+			StatusCode: serializer.UnknownError,
+			StatusMsg:  "保存文件出错！",
+		}
+	}
+	// 将视频截取第一帧作为视频封面
+	reader := util.ReadFrameAsJpeg(saveVedioPath, 1)
+	img, err := imaging.Decode(reader)
+	if err != nil {
+		util.Log().Error("截取视频封面错误！\n", err)
+		return &serializer.ActionResponse{
+			StatusCode: serializer.UnknownError,
+			StatusMsg:  "截取视频封面错误！",
+		}
+	}
+	saveImgPath := filepath.Join(util.IMG, prefix+".jpeg")
+	err = imaging.Save(img, saveImgPath)
+	if err != nil {
+		util.Log().Error("保存封面错误！\n", err)
+		return &serializer.ActionResponse{
+			StatusCode: serializer.ParamInvalid,
+			StatusMsg:  "保存封面错误！",
+		}
+	}
+	video := model.Video{
+		UserID:        int64(userid),
+		CoverURL:      "http://" + host + "/static/img/" + saveImgPath,
+		CommentCount:  0,
+		FavoriteCount: 0,
+		PlayURL:       "http://" + host + "/static/video/" + saveVedioPath,
+		Title:         req.Title,
+	}
+	err = model.CreateAVideo(&video)
+	if err != nil {
+		return &serializer.ActionResponse{
+			StatusCode: serializer.ParamInvalid,
+			StatusMsg:  "请求参数错误",
+		}
+	}
+
+	return &serializer.ActionResponse{
+		StatusCode: serializer.OK,
+		StatusMsg:  "视频上传成功",
+	}
+}
+
+func getFileName(userid int) string {
+	var builder strings.Builder
+	builder.WriteString(strconv.Itoa(userid))
+	builder.WriteString("_")
+	builder.WriteString(util.RandStringRunes(3))
+	builder.WriteString("_")
+	builder.WriteString(time.Now().Format("20060102150405"))
+	return builder.String()
+}
+
+func saveUploadedFile(file *multipart.FileHeader, dst string) error {
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, src)
+	return err
 }
