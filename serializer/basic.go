@@ -76,6 +76,6 @@ type FeedResponse struct {
 }
 
 type FeedRequest struct {
-	LatestTime int64  `form:"lastet_time" json:"latest_time"` // 返回当前指定时间之前上传的视频视频
+	LatestTime int64  `form:"latest_time" json:"latest_time"` // 返回当前指定时间之前上传的视频视频
 	Token      string `form:"token" json:"token"`             //用户鉴权token
 }

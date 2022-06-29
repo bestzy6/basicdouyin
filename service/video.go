@@ -5,6 +5,7 @@ import (
 	"basictiktok/model"
 	"basictiktok/serializer"
 	"basictiktok/util"
+	"fmt"
 	"github.com/disintegration/imaging"
 	"io"
 	"mime/multipart"
@@ -158,15 +159,20 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 			StatusMsg:  "保存封面错误！",
 		}
 	}
+	fmt.Println(saveImgPath)
+	fmt.Println(saveVedioPath)
 	video := model.Video{
-		UserID:        int64(userid),
-		CoverURL:      "http://" + host + "/static/img/" + saveImgPath,
+		UserID: int64(userid),
+		//CoverURL:      "http://" + host + "/static/img/" + saveImgPath,
+		CoverURL:      "http://" + host + saveImgPath,
 		CommentCount:  0,
 		FavoriteCount: 0,
-		PlayURL:       "http://" + host + "/static/video/" + saveVedioPath,
-		Title:         req.Title,
+		//PlayURL:       "http://" + host + "/static/video/" + saveVedioPath,
+		PlayURL: "http://" + host + saveVedioPath,
+		Title:   req.Title,
 	}
-	err = model.CreateAVideo(&video)
+	err = video.Create()
+	//err = model.CreateAVideo(&video)
 	if err != nil {
 		return &serializer.ActionResponse{
 			StatusCode: serializer.ParamInvalid,
