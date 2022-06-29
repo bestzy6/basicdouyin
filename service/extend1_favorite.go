@@ -8,7 +8,7 @@ import (
 )
 
 // FavoritePostService 点赞操作
-func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse {
+func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.LikesResponse {
 	var resp serializer.LikesResponse
 	vid := req.VideoId
 	newV := model.NewVideoClDaoInstance()
@@ -21,7 +21,7 @@ func FavoritePostService(req *serializer.LikesRequest) *serializer.LikesResponse
 
 	if req.ActionType == 1 { //点赞操作
 		fPost := model.FavoritePost{
-			UserId:    1, // 根据token 获得 user_id
+			UserId:    int64(userid), // 根据token 获得 user_id
 			VideoId:   int64(req.VideoId),
 			DiggCount: int32(num.FavoriteCount),
 		}
@@ -50,7 +50,7 @@ func FavoriteListService(req *serializer.LikeListRequest, myUserId int) *seriali
 		util.Log().Error("获取点赞列表失败:", err)
 	}
 	videoLs := favoritePostDao.GetVideoIdList(videoPost)
-	results, err1 := favoritePostDao.QueryPostByUserId(videoLs) // 拿到所有相关的video 实体
+	results, err1 := favoritePostDao.QueryPostByVedioId(videoLs) // 拿到所有相关的video 实体
 	if err1 != nil {
 		util.Log().Error("获取点赞列表失败:", err)
 	}

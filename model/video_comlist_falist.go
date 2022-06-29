@@ -43,13 +43,13 @@ func (v *VideoClDao) QueryByVideoId(videoId int64) (*VideoCL, error) {
 
 // DeFavorite 点赞-1
 func (v *VideoClDao) DeFavorite(vid int64) error {
-	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("favorite_count", gorm.Expr("follower_count - ?", 1)).Error
+	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count - ?", 1)).Error
 	return err
 }
 
 // AddFavorite 点赞+1
 func (v *VideoClDao) AddFavorite(vid int64) error {
-	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("favorite_count", gorm.Expr("follower_count + ?", 1)).Error
+	err := DB.Table("douyin.videoCL").Where("video_id=?", vid).UpdateColumn("favorite_count", gorm.Expr("favorite_count + ?", 1)).Error
 	return err
 }
 

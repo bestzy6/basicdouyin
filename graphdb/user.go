@@ -3,6 +3,7 @@ package graphdb
 import (
 	"basictiktok/util"
 	"errors"
+	"fmt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
@@ -165,6 +166,35 @@ func (u User) UnFollow(target *User) error {
 	return err
 }
 
+// MyFollowers 如果请求ID与UserID相同，则返回本人的关注者
+func (u User) MyFollowers() (map[int]*User, error) {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	users := make(map[int]*User)
+	result, err := session.Run("MATCH (a:Users{id:$ID})-[:follow]->(b:Users) "+
+		"RETURN b",
+		map[string]interface{}{
+			"ID": u.ID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for result.Next() {
+		record := result.Record()
+		user := u.record2User(record, "b")
+		user.IsFollow = true
+		users[user.ID] = user
+	}
+	return users, nil
+}
+
 // Followers 关注列表，requestor的ID必填
 func (u User) Followers(requestor *User) (map[int]*User, error) {
 	session := newSession()
@@ -250,11 +280,9 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 			record := result.Record()
 			user := u.record2User(record, "b")
 			users[user.ID] = user
-			//users = append(users, user)
 		}
 		//获取是u的粉丝，且是requestor关注的人
-		result, err = tx.Run("MATCH (a:Users{id:$ID})<-[:follow]-(c:Users)<-[:follow]-(b:Users{id:$RID})"+
-			"WHERE a.id=$ID and b.id=$RID "+
+		result, err = tx.Run("MATCH (a:Users{id:$ID})<-[:follow]-(c:Users)<-[:follow]-(b:Users{id:$RID}) "+
 			"RETURN c",
 			map[string]interface{}{
 				"ID":  u.ID,
@@ -265,9 +293,12 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 			tx.Rollback()
 			return nil, err
 		}
+		fmt.Println(requestor.ID, u.ID)
+		fmt.Println("hello")
 		for result.Next() {
 			record := result.Record()
 			user := u.record2User(record, "c")
+			fmt.Println(user.ID)
 			users[user.ID].IsFollow = true
 			//users = append(users, user)
 		}

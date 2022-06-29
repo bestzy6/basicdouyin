@@ -50,7 +50,7 @@ func FindVideoBeforeTime(time int64) ([]*Video, error) {
 // QueryVideoListByUserID返回用户发布视频列表
 func QueryVideoListByUserID(userid int) ([]*Video, error) {
 	var videos []*Video
-	err := DB.Debug().Where("user_id = ?", userid).Find(&videos).Error
+	err := DB.Where("user_id = ?", userid).Find(&videos).Error
 	return videos, err
 }
 

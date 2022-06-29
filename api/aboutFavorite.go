@@ -24,7 +24,8 @@ func FavoritePost(c *gin.Context) {
 		return
 	}
 	// 构造响应,返回评论内容
-	resp := service.FavoritePostService(&req)
+	userid, _ := c.Get("userid")
+	resp := service.FavoritePostService(&req, userid.(int))
 	c.JSON(http.StatusOK, resp)
 }
 func FavoriteList(c *gin.Context) {

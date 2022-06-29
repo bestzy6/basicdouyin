@@ -37,6 +37,7 @@ func (*FavoritePostDao) QueryFavoritePostById(userid int64) ([]*FavoritePost, er
 	var videoId []*FavoritePost
 	err := DB.Table("douyin.favorite_post").Where("user_id = ?", userid).Find(&videoId).Error
 	if err == gorm.ErrRecordNotFound {
+		util.Log().Error("QueryFavoritePostById err\n", err)
 		return nil, nil
 	}
 	if err != nil {
@@ -56,11 +57,11 @@ func (*FavoritePostDao) GetVideoIdList(videoId []*FavoritePost) []int64 {
 }
 
 // QueryPostByUserId 根据video_Id 查询所有的点赞的视频
-func (*FavoritePostDao) QueryPostByUserId(videoLs []int64) ([]*Video, error) {
+func (*FavoritePostDao) QueryPostByVedioId(videoLs []int64) ([]*Video, error) {
 	var videos []*Video
 	err := DB.Table(Video{}.TableName()).Where("id in (?)", videoLs).Find(&videos).Error // 优化地方
 	if err != nil {
-		util.Log().Error("find posts by video_id err:" + err.Error())
+		util.Log().Error("find posts by video_id err:", err)
 		return nil, err
 	}
 	return videos, nil
