@@ -16,6 +16,10 @@ type Video struct {
 	AddTime       int64  `gorm:"column:add_time"`                     // 视频添加时间
 }
 
+func (Video) TableName() string {
+	return "video"
+}
+
 type VideoDao struct {
 }
 

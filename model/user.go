@@ -20,6 +20,10 @@ type User struct {
 	FollowerCount int64  `gorm:"column:follower_count"`               // 粉丝总数
 }
 
+func (User) TableName() string {
+	return "user"
+}
+
 // QueryUserByName 通过用户名查询用户信息
 func QueryUserByName(username string) (user *User, err error) {
 	user = new(User)

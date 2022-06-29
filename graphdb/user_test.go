@@ -20,6 +20,10 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestUser_Clear(t *testing.T) {
+	ClearAll()
+}
+
 // 注意，此测试会清空数据库
 func TestUser_Create(t *testing.T) {
 	ClearAll()

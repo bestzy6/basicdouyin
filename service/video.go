@@ -71,6 +71,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 		videoRes.FavoriteCount = videos[k].FavoriteCount
 		videoRes.CommentCount = videos[k].CommentCount
 		videoRes.ID = videos[k].ID
+		//
 		videoList = append(videoList, videoRes)
 	}
 	resp.VideoList = videoList
@@ -131,7 +132,8 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 func ActionService(req *serializer.ActionRequest, userid int, host string) *serializer.ActionResponse {
 	prefix := getFileName(userid)
 	split := strings.Split(filepath.Base(req.Data.Filename), ".")
-	saveVedioPath := filepath.Join(util.VEDIO, prefix+"."+split[1])
+	vedioFileName := prefix + "." + split[1] //视频文件名
+	saveVedioPath := filepath.Join(util.VEDIO, vedioFileName)
 	err := saveUploadedFile(req.Data, saveVedioPath)
 	if err != nil {
 		util.Log().Error("保存文件出错！\n", err)
@@ -150,7 +152,8 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 			StatusMsg:  "截取视频封面错误！",
 		}
 	}
-	saveImgPath := filepath.Join(util.IMG, prefix+".jpeg")
+	imgFileName := prefix + ".jpeg" //截图文件名
+	saveImgPath := filepath.Join(util.IMG, imgFileName)
 	err = imaging.Save(img, saveImgPath)
 	if err != nil {
 		util.Log().Error("保存封面错误！\n", err)
@@ -162,14 +165,13 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 	fmt.Println(saveImgPath)
 	fmt.Println(saveVedioPath)
 	video := model.Video{
-		UserID: int64(userid),
-		//CoverURL:      "http://" + host + "/static/img/" + saveImgPath,
-		CoverURL:      "http://" + host + saveImgPath,
+		UserID:        int64(userid),
+		CoverURL:      "http://" + host + "/static/img/" + imgFileName,
 		CommentCount:  0,
 		FavoriteCount: 0,
-		//PlayURL:       "http://" + host + "/static/video/" + saveVedioPath,
-		PlayURL: "http://" + host + saveVedioPath,
-		Title:   req.Title,
+		PlayURL:       "http://" + host + "/static/video/" + vedioFileName,
+		Title:         req.Title,
+		AddTime:       time.Now().Unix(),
 	}
 	err = video.Create()
 	//err = model.CreateAVideo(&video)

@@ -58,7 +58,7 @@ func (*FavoritePostDao) GetVideoIdList(videoId []*FavoritePost) []int64 {
 // QueryPostByUserId 根据video_Id 查询所有的点赞的视频
 func (*FavoritePostDao) QueryPostByUserId(videoLs []int64) ([]*Video, error) {
 	var videos []*Video
-	err := DB.Table("douyin.videos").Where("id in (?)", videoLs).Find(&videos).Error // 优化地方
+	err := DB.Table(Video{}.TableName()).Where("id in (?)", videoLs).Find(&videos).Error // 优化地方
 	if err != nil {
 		util.Log().Error("find posts by video_id err:" + err.Error())
 		return nil, err
