@@ -5,7 +5,6 @@ import (
 	"basictiktok/model"
 	"basictiktok/serializer"
 	"basictiktok/util"
-	"fmt"
 	"github.com/disintegration/imaging"
 	"io"
 	"mime/multipart"
@@ -57,7 +56,6 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 				return &resp
 			}
 			uper.IsFollow = isFollow
-
 			// 判断是否点赞
 			videoRes.IsFavorite = IsFavorite(int64(user.ID), videos[k].ID)
 		} else {
@@ -162,8 +160,6 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 			StatusMsg:  "保存封面错误！",
 		}
 	}
-	fmt.Println(saveImgPath)
-	fmt.Println(saveVedioPath)
 	video := model.Video{
 		UserID:        int64(userid),
 		CoverURL:      "http://" + host + "/static/img/" + imgFileName,
@@ -174,7 +170,6 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 		AddTime:       time.Now().Unix(),
 	}
 	err = video.Create()
-	//err = model.CreateAVideo(&video)
 	if err != nil {
 		return &serializer.ActionResponse{
 			StatusCode: serializer.ParamInvalid,

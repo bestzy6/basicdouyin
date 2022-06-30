@@ -8,33 +8,57 @@ import (
 )
 
 // FavoritePostService 点赞操作
-func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.LikesResponse {
-	var resp serializer.LikesResponse
-	vid := req.VideoId
-	newV := model.NewVideoClDaoInstance()
-	newV.AddFavorite(int64(vid)) // 更新冗余表的点赞总数
-	num, _ := newV.QueryByVideoId(int64(vid))
-	// 更新video 表的评论总数字段
-	// 调用下佳佳更新video表就完事了         这样一个一个更新影响效率
-	videoDao := model.NewVideoDaoInstance()
-	videoDao.AddFavorite(int64(vid))
+//func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.LikesResponse {
+//	var resp serializer.LikesResponse
+//	vid := req.VideoId
+//	newV := model.NewVideoClDaoInstance()
+//	newV.AddFavorite(int64(vid)) // 更新冗余表的点赞总数
+//	num, _ := newV.QueryByVideoId(int64(vid))
+//	// 更新video 表的评论总数字段
+//	// 调用下佳佳更新video表就完事了         这样一个一个更新影响效率
+//	videoDao := model.NewVideoDaoInstance()
+//	videoDao.AddFavorite(int64(vid))
+//
+//	if req.ActionType == 1 { //点赞操作
+//		fPost := model.FavoritePost{
+//			UserId:    int64(userid), // 根据token 获得 user_id
+//			VideoId:   int64(req.VideoId),
+//			DiggCount: int32(num.FavoriteCount),
+//		}
+//		if err := model.NewFavoritePostDaoInstance().CreateFPost(&fPost); err != nil {
+//			util.Log().Error("点赞失败:", err)
+//		}
+//	} else {
+//		if err := newV.DeFavorite(int64(vid)); err != nil { // 根据给定的条件更新单个属性
+//			util.Log().Error("取消点赞失败:", err)
+//		} else {
+//			videoDao.DeleteFavorite(int64(vid))
+//		}
+//	}
+//	resp.StatusCode = serializer.OK
+//	resp.StatusMsg = "点赞成功"
+//	return &resp
+//}
 
-	if req.ActionType == 1 { //点赞操作
-		fPost := model.FavoritePost{
-			UserId:    int64(userid), // 根据token 获得 user_id
-			VideoId:   int64(req.VideoId),
-			DiggCount: int32(num.FavoriteCount),
-		}
-		if err := model.NewFavoritePostDaoInstance().CreateFPost(&fPost); err != nil {
-			util.Log().Error("点赞失败:", err)
-		}
+func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.LikesResponse {
+	var (
+		resp serializer.LikesResponse
+		err  error
+	)
+	user := graphdb.User{ID: userid}
+	vedio := graphdb.Video{ID: req.VideoId}
+	if req.ActionType == 1 {
+		//点赞
+		err = user.Favorite(&vedio)
 	} else {
-		if err := newV.DeFavorite(int64(vid)); err != nil { // 根据给定的条件更新单个属性
-			util.Log().Error("取消点赞失败:", err)
-		} else {
-			videoDao.DeleteFavorite(int64(vid))
-		}
+		//取消点赞
+		err = user.UnFavorite(&vedio)
 	}
+	if err != nil {
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = err.Error()
+	}
+
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "点赞成功"
 	return &resp

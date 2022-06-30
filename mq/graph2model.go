@@ -8,35 +8,44 @@ const maxMessageNum = 100
 type OperaNum uint8
 
 const (
-	Follow   OperaNum = iota //关注
-	UnFollow                 //取消关注
+	Follow     OperaNum = iota //关注
+	UnFollow                   //取消关注
+	Favorite                   //点赞
+	UnFavorite                 //取消点赞
 )
 
-type G2mMessage struct {
-	User   *model.User
-	ToUser *model.User
-	Num    OperaNum
+type UserMessage struct {
+	User    *model.User
+	ToUser  *model.User
+	ToVideo *model.Video
+	OpNum   OperaNum
 }
 
 var (
-	ToModelUserMQ chan *G2mMessage
+	ToModelUserMQ chan *UserMessage
 )
 
 func InitMQ() {
-	ToModelUserMQ = make(chan *G2mMessage, maxMessageNum)
+	ToModelUserMQ = make(chan *UserMessage, maxMessageNum)
 	go listenToModelUserMQ()
 }
 
 func listenToModelUserMQ() {
-	var msg *G2mMessage
+	var msg *UserMessage
 	for {
 		msg = <-ToModelUserMQ
-		user, toUser := msg.User, msg.ToUser
-		switch msg.Num {
+		user, toUser, video := msg.User, msg.ToUser, msg.ToVideo
+		switch msg.OpNum {
 		case Follow:
 			user.Follow(toUser)
 		case UnFollow:
 			user.UnFollow(toUser)
+		case Favorite:
+			videoDao := model.NewVideoDaoInstance()
+			videoDao.AddFavorite(video.ID)
+		case UnFavorite:
+			videoDao := model.NewVideoDaoInstance()
+			videoDao.DeleteFavorite(video.ID)
 		}
 	}
 }

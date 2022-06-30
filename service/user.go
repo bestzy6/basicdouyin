@@ -100,10 +100,8 @@ func QueryUserInfoService(req *serializer.UserInfoRequest, userid int) *serializ
 // model的用户转换为graphdb的用户
 func model2graph(user *model.User) *graphdb.User {
 	toUser := &graphdb.User{
-		ID:            user.ID,
-		Name:          user.UserName,
-		FollowCount:   int(user.FollowCount),
-		FollowerCount: int(user.FollowerCount),
+		ID:   user.ID,
+		Name: user.UserName,
 	}
 	return toUser
 }

@@ -70,11 +70,9 @@ func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListR
 	ansUsers := make([]serializer.User, 0, len(users))
 	for _, v := range users {
 		ansUser := serializer.User{
-			ID:            int64(v.ID),
-			Name:          v.Name,
-			FollowCount:   int64(v.FollowCount),
-			FollowerCount: int64(v.FollowerCount),
-			IsFollow:      v.IsFollow,
+			ID:       int64(v.ID),
+			Name:     v.Name,
+			IsFollow: v.IsFollow,
 		}
 		ansUsers = append(ansUsers, ansUser)
 	}
@@ -100,11 +98,9 @@ func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesRes
 	ansUsers := make([]serializer.User, 0, len(users))
 	for _, v := range users {
 		ansUser := serializer.User{
-			ID:            int64(v.ID),
-			Name:          v.Name,
-			FollowCount:   int64(v.FollowCount),
-			FollowerCount: int64(v.FollowerCount),
-			IsFollow:      v.IsFollow,
+			ID:       int64(v.ID),
+			Name:     v.Name,
+			IsFollow: v.IsFollow,
 		}
 		ansUsers = append(ansUsers, ansUser)
 	}
@@ -116,10 +112,8 @@ func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesRes
 
 func graph2model(user *graphdb.User) *model.User {
 	toUser := &model.User{
-		ID:            user.ID,
-		UserName:      user.Name,
-		FollowCount:   int64(user.FollowCount),
-		FollowerCount: int64(user.FollowerCount),
+		ID:       user.ID,
+		UserName: user.Name,
 	}
 	return toUser
 }

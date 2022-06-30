@@ -28,6 +28,7 @@ func FavoritePost(c *gin.Context) {
 	resp := service.FavoritePostService(&req, userid.(int))
 	c.JSON(http.StatusOK, resp)
 }
+
 func FavoriteList(c *gin.Context) {
 	var req serializer.LikeListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {

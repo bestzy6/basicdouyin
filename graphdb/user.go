@@ -3,17 +3,16 @@ package graphdb
 import (
 	"basictiktok/util"
 	"errors"
-	"fmt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 )
 
 type User struct {
-	ID            int    // 用户id,id
-	Name          string // 用户名称,name
-	FollowCount   int    // 关注总数,follow
-	FollowerCount int    // 粉丝总数,follower
-	IsFollow      bool   // true-已关注，false-未关注
+	ID   int    // 用户id,id
+	Name string // 用户名称,name
+	//FollowCount   int    // 关注总数,follow
+	//FollowerCount int    // 粉丝总数,follower
+	IsFollow bool // true-已关注，false-未关注
 }
 
 // Create 创建用户
@@ -26,13 +25,11 @@ func (u User) Create() error {
 		}
 	}(session)
 	//
-	result, err := session.Run("CREATE (u:Users{id:$ID,name:$Name,follow:$FollowCount,follower:$FollowerCount}) "+
+	result, err := session.Run("CREATE (u:Users{id:$ID,name:$Name}) "+
 		"RETURN u.id,u.name",
 		map[string]interface{}{
-			"ID":            u.ID,
-			"Name":          u.Name,
-			"FollowCount":   u.FollowCount,
-			"FollowerCount": u.FollowerCount,
+			"ID":   u.ID,
+			"Name": u.Name,
 		},
 	)
 	if err != nil {
@@ -46,6 +43,94 @@ func (u User) Create() error {
 	name, _ := record.Get("u.name")
 	util.Log().Info("创建用户图结点[ID:%v Name:%v]成功!\n", id, name)
 	return result.Err()
+}
+
+// Favorite 点赞视频
+func (u User) Favorite(v *Vedio) error {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	_, err := session.WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+		hash := map[string]interface{}{
+			"UID": u.ID,
+			"VID": v.ID,
+		}
+		//查询是否存在关系
+		result, err := tx.Run(
+			"MATCH (a:Users{id:$UID})-[rel:favorite]->(b:Vedios{id:$VID}) "+
+				"RETURN COUNT(rel)", hash)
+		if err != nil {
+			return nil, err
+		}
+		//如果已经存在关注关系，则返回错误
+		record, err := result.Single()
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		if n, _ := record.Get("COUNT(rel)"); n.(int64) > 0 {
+			tx.Rollback()
+			return nil, errors.New("点赞失败，已点赞！")
+		}
+		//建立关注关系
+		result, err = tx.Run(
+			"MATCH (a:Users{id:$UID}),(b:Vedios{id:$VID}) "+
+				"CREATE (a)-[r1:favorite]->(b) "+
+				"RETURN r1", hash)
+		if err != nil {
+			return nil, err
+		}
+		if result.Err() != nil {
+			return nil, result.Err()
+		}
+		return nil, result.Err()
+	})
+	return err
+}
+
+// UnFavorite 取消点赞视频
+func (u User) UnFavorite(v *Vedio) error {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	_, err := session.WriteTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+		hash := map[string]interface{}{
+			"UID": u.ID,
+			"VID": v.ID,
+		}
+		//取消关注关系
+		result, err := tx.Run(
+			"MATCH (a:Users{id:$UID})-[rel:favorite]->(b:Vedios{id:$VID}) "+
+				"DELETE rel "+
+				"RETURN COUNT(rel)", hash)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		//如果不存在关注关系，则返回错误
+		record, err := result.Single()
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		if n, _ := record.Get("COUNT(rel)"); n.(int64) <= 0 {
+			tx.Rollback()
+			return nil, errors.New("取消点赞失败，没有点赞！")
+		}
+		tx.Commit()
+		return nil, result.Err()
+	})
+	return err
 }
 
 // Follow 关注用户，target的ID必填
@@ -91,15 +176,6 @@ func (u User) Follow(target *User) error {
 		if result.Err() != nil {
 			return nil, result.Err()
 		}
-		//更新双方结点的属性值
-		result, err = tx.Run(
-			"MATCH (a:Users),(b:Users) "+
-				"WHERE a.id=$AID AND b.id=$BID "+
-				"SET a.follow = a.follow+1, b.follower = b.follower+1 "+
-				"RETURN a,b", hash)
-		if err != nil {
-			return nil, err
-		}
 		return nil, result.Err()
 	})
 	return err
@@ -139,27 +215,6 @@ func (u User) UnFollow(target *User) error {
 			tx.Rollback()
 			return nil, errors.New("取消关注失败，没有关注！")
 		}
-		//更新双方结点的属性值
-		result, err = tx.Run("MATCH (a:Users),(b:Users) WHERE a.id=$AID AND b.id=$BID "+
-			"SET a.follow = a.follow-1, b.follower = b.follower-1 "+
-			"RETURN a,b", hash)
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-		record, err = result.Single()
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-		a, _ := record.Get("a")
-		b, _ := record.Get("b")
-		nodeA, nodeB := a.(dbtype.Node), b.(dbtype.Node)
-		util.Log().Info("取消关注成功！用户[ID:%v Name:%v]的关注数-1，用户[ID:%v Name:%v]的粉丝数-1\n",
-			nodeA.Props["id"],
-			nodeA.Props["name"],
-			nodeB.Props["id"],
-			nodeB.Props["name"])
 		tx.Commit()
 		return nil, result.Err()
 	})
@@ -293,20 +348,15 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 			tx.Rollback()
 			return nil, err
 		}
-		fmt.Println(requestor.ID, u.ID)
-		fmt.Println("hello")
 		for result.Next() {
 			record := result.Record()
 			user := u.record2User(record, "c")
-			fmt.Println(user.ID)
 			users[user.ID].IsFollow = true
-			//users = append(users, user)
 		}
 		if result.Err() != nil {
 			tx.Rollback()
 			return nil, result.Err()
 		}
-
 		tx.Commit()
 		return nil, nil
 	})
@@ -352,10 +402,8 @@ func (u User) record2User(record *neo4j.Record, key string) *User {
 	get, _ := record.Get(key)
 	node := get.(dbtype.Node)
 	return &User{
-		ID:            int(node.Props["id"].(int64)),
-		Name:          node.Props["name"].(string),
-		FollowCount:   int(node.Props["follow"].(int64)),
-		FollowerCount: int(node.Props["follower"].(int64)),
+		ID:   int(node.Props["id"].(int64)),
+		Name: node.Props["name"].(string),
 	}
 }
 
@@ -365,6 +413,7 @@ func IsFollow(src, target int) (bool, error) {
 	if src == target {
 		return true, nil
 	}
+	//
 	session := newSession()
 	defer func(session neo4j.Session) {
 		err := session.Close()
