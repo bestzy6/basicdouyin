@@ -58,7 +58,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 			}
 			uper.IsFollow = isFollow
 			// 判断是否点赞
-			videoRes.IsFavorite = IsFavorite(int64(user.ID), videos[k].ID)
+			videoRes.IsFavorite = graphdb.IsFavorite(user.ID, int(videos[k].ID))
 		} else {
 			videoRes.IsFavorite = false
 		}
@@ -89,17 +89,18 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
-	var userRes serializer.User
-	userRes.ID = int64(user.ID)
-	userRes.Name = user.UserName
+	userRes := serializer.User{
+		ID:            int64(user.ID),
+		Name:          user.UserName,
+		FollowCount:   user.FollowCount,
+		FollowerCount: user.FollowerCount,
+	}
 	userRes.IsFollow, err = graphdb.IsFollow(userid, user.ID)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
-	userRes.FollowCount = user.FollowCount
-	userRes.FollowerCount = user.FollowerCount
 
 	videos, err := model.QueryVideoListByUserID(user.ID)
 	if err != nil {
@@ -109,19 +110,18 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 	}
 	videoList := make([]serializer.Video, 0, len(videos))
 	for k := range videos {
-		var videoRes serializer.Video
-		videoRes.Author = userRes
-		// 判断是否点赞
-		videoRes.IsFavorite = IsFavorite(int64(user.ID), videos[k].ID)
-		videoRes.Title = videos[k].Title
-		videoRes.PlayURL = videos[k].PlayURL
-		videoRes.CoverURL = videos[k].CoverURL
-		videoRes.FavoriteCount = videos[k].FavoriteCount
-		videoRes.CommentCount = videos[k].CommentCount
-		videoRes.ID = videos[k].ID
-		videoList = append(videoList, videoRes)
+		video := serializer.Video{
+			Author:        userRes,
+			IsFavorite:    graphdb.IsFavorite(user.ID, int(videos[k].ID)),
+			Title:         videos[k].Title,
+			PlayURL:       videos[k].PlayURL,
+			CoverURL:      videos[k].CoverURL,
+			FavoriteCount: videos[k].FavoriteCount,
+			CommentCount:  videos[k].CommentCount,
+			ID:            videos[k].ID,
+		}
+		videoList = append(videoList, video)
 	}
-
 	resp.VideoList = videoList
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"

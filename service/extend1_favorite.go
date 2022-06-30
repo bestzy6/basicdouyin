@@ -5,7 +5,6 @@ import (
 	"basictiktok/model"
 	"basictiktok/mq"
 	"basictiktok/serializer"
-	"basictiktok/util"
 )
 
 // FavoritePostService 点赞操作
@@ -156,20 +155,20 @@ func FavoriteListService(req *serializer.LikeListRequest, myUserId int) *seriali
 //}
 
 // IsFavorite 获取用户点赞的视频
-func IsFavorite(userId, videoId int64) bool {
-	newFPO := model.NewFavoritePostDaoInstance()
-	tmp, err := newFPO.QueryFavoritePostById(userId)
-	if err != nil {
-		util.Log().Error("获取点赞视频失败:", err)
-	}
-	videoLs := newFPO.GetVideoIdList(tmp)
-	for _, v := range videoLs {
-		if v == videoId {
-			return true
-		}
-	}
-	return false
-}
+//func IsFavorite(userId, videoId int64) bool {
+//	newFPO := model.NewFavoritePostDaoInstance()
+//	tmp, err := newFPO.QueryFavoritePostById(userId)
+//	if err != nil {
+//		util.Log().Error("获取点赞视频失败:", err)
+//	}
+//	videoLs := newFPO.GetVideoIdList(tmp)
+//	for _, v := range videoLs {
+//		if v == videoId {
+//			return true
+//		}
+//	}
+//	return false
+//}
 
 func videoG2M(m *graphdb.Video) *model.Video {
 	return &model.Video{ID: int64(m.ID)}

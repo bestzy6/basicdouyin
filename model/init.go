@@ -45,6 +45,13 @@ func Database(connString string) {
 	//打开
 	sqlDB.SetMaxOpenConns(20)
 	DB = db
-
 	migration()
+}
+
+func migration() {
+	// 自动迁移模式
+	_ = DB.AutoMigrate(&User{})
+	_ = DB.AutoMigrate(&Video{})
+	_ = DB.AutoMigrate(&Post{})
+	//_ = DB.AutoMigrate(&VideoCL{})
 }

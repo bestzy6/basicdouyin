@@ -88,6 +88,13 @@ func (u User) Favorite(v *Video) error {
 		if result.Err() != nil {
 			return nil, result.Err()
 		}
+		//视频获赞数+1
+		result, err = tx.Run(
+			"MATCH (b:Videos{id:$VID}) SET b.favoriteCount = b.favoriteCount+1", hash)
+		if err != nil {
+			return nil, err
+		}
+		tx.Commit()
 		return nil, result.Err()
 	})
 	return err
@@ -126,6 +133,12 @@ func (u User) UnFavorite(v *Video) error {
 		if n, _ := record.Get("COUNT(rel)"); n.(int64) <= 0 {
 			tx.Rollback()
 			return nil, errors.New("取消点赞失败，没有点赞！")
+		}
+		//视频获赞数-1
+		result, err = tx.Run(
+			"MATCH (b:Videos{id:$VID}) SET b.favoriteCount = b.favoriteCount-1", hash)
+		if err != nil {
+			return nil, err
 		}
 		tx.Commit()
 		return nil, result.Err()
