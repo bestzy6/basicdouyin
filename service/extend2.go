@@ -3,6 +3,7 @@ package service
 import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
+	"basictiktok/mq"
 	"basictiktok/serializer"
 	"basictiktok/util"
 )
@@ -30,16 +31,18 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
-	modelUser := graph2model(&user)
-	modelToUser := graph2model(&targetUser)
+	//mysql异步更新
+	msg := &mq.G2mMessage{
+		User:   graph2model(&user),
+		ToUser: graph2model(&targetUser),
+	}
 	if req.ActionType == 1 {
-		err = modelUser.Follow(modelToUser)
+		msg.Num = mq.Follow
 	} else {
-		err = modelUser.UnFollow(modelToUser)
+		msg.Num = mq.UnFollow
 	}
-	if err != nil {
-		util.Log().Error("mysql关注错误\n", err)
-	}
+	mq.ToModelUserMQ <- msg
+	//
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"
 	return &resp
