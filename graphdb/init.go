@@ -44,6 +44,7 @@ func createIndex() {
 	session := newSession()
 	defer session.Close()
 	_, err := session.Run("CREATE CONSTRAINT IF NOT EXISTS FOR (u:Users) REQUIRE u.id IS UNIQUE", map[string]interface{}{})
+	_, err = session.Run("CREATE CONSTRAINT IF NOT EXISTS FOR (v:Videos) REQUIRE v.id IS UNIQUE", map[string]interface{}{})
 	if err != nil {
 		util.Log().Error("create graph index failed:", err)
 	}

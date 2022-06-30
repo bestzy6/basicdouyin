@@ -46,7 +46,7 @@ func (u User) Create() error {
 }
 
 // Favorite 点赞视频
-func (u User) Favorite(v *Vedio) error {
+func (u User) Favorite(v *Video) error {
 	session := newSession()
 	defer func(session neo4j.Session) {
 		err := session.Close()
@@ -62,7 +62,7 @@ func (u User) Favorite(v *Vedio) error {
 		}
 		//查询是否存在关系
 		result, err := tx.Run(
-			"MATCH (a:Users{id:$UID})-[rel:favorite]->(b:Vedios{id:$VID}) "+
+			"MATCH (a:Users{id:$UID})-[rel:favorite]->(b:Videos{id:$VID}) "+
 				"RETURN COUNT(rel)", hash)
 		if err != nil {
 			return nil, err
@@ -79,7 +79,7 @@ func (u User) Favorite(v *Vedio) error {
 		}
 		//建立关注关系
 		result, err = tx.Run(
-			"MATCH (a:Users{id:$UID}),(b:Vedios{id:$VID}) "+
+			"MATCH (a:Users{id:$UID}),(b:Videos{id:$VID}) "+
 				"CREATE (a)-[r1:favorite]->(b) "+
 				"RETURN r1", hash)
 		if err != nil {
@@ -94,7 +94,7 @@ func (u User) Favorite(v *Vedio) error {
 }
 
 // UnFavorite 取消点赞视频
-func (u User) UnFavorite(v *Vedio) error {
+func (u User) UnFavorite(v *Video) error {
 	session := newSession()
 	defer func(session neo4j.Session) {
 		err := session.Close()
@@ -110,7 +110,7 @@ func (u User) UnFavorite(v *Vedio) error {
 		}
 		//取消关注关系
 		result, err := tx.Run(
-			"MATCH (a:Users{id:$UID})-[rel:favorite]->(b:Vedios{id:$VID}) "+
+			"MATCH (a:Users{id:$UID})-[rel:favorite]->(b:Videos{id:$VID}) "+
 				"DELETE rel "+
 				"RETURN COUNT(rel)", hash)
 		if err != nil {
@@ -131,6 +131,87 @@ func (u User) UnFavorite(v *Vedio) error {
 		return nil, result.Err()
 	})
 	return err
+}
+
+func (u User) MyFavoriteList() (map[int]*Video, error) {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	result, err := session.Run("MATCH (a:Users{id:$ID})-[:favorite]->(b:Videos) "+
+		"RETURN b",
+		map[string]interface{}{
+			"ID": u.ID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	list := make(map[int]*Video, 0)
+	for result.Next() {
+		record := result.Record()
+		video := u.record2Video(record, "b")
+		video.isFavorite = true
+		list[video.ID] = video
+	}
+	return list, nil
+}
+
+func (u User) FavoriteList(requestor *User) (map[int]*Video, error) {
+	session := newSession()
+	defer func(session neo4j.Session) {
+		err := session.Close()
+		if err != nil {
+			util.Log().Error("close session err", err)
+		}
+	}(session)
+	//
+	videos := make(map[int]*Video)
+	_, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
+		//获取u关注的人
+		result, err := tx.Run("MATCH (a:Users{id:$ID})-[:favorite]->(b:Videos) "+
+			"RETURN b",
+			map[string]interface{}{
+				"ID": u.ID,
+			},
+		)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		for result.Next() {
+			record := result.Record()
+			video := u.record2Video(record, "b")
+			videos[video.ID] = video
+		}
+		//获取同时关注的人
+		result, err = tx.Run("MATCH (a:Users)-[:favorite]->(c:Videos)<-[:favorite]-(b:Users) "+
+			"where a.id=$ID and b.id=$RID "+
+			"return c",
+			map[string]interface{}{
+				"ID":  u.ID,
+				"RID": requestor.ID,
+			},
+		)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		for result.Next() {
+			record := result.Record()
+			video := u.record2Video(record, "c")
+			videos[video.ID].isFavorite = true
+		}
+		//
+		tx.Commit()
+		return nil, nil
+	})
+	//
+	return videos, err
 }
 
 // Follow 关注用户，target的ID必填
@@ -296,7 +377,7 @@ func (u User) Followers(requestor *User) (map[int]*User, error) {
 			user := u.record2User(record, "c")
 			users[user.ID].IsFollow = true
 		}
-
+		//
 		tx.Commit()
 		return nil, nil
 	})
@@ -314,7 +395,6 @@ func (u User) Followees(requestor *User) (map[int]*User, error) {
 	}(session)
 	//
 	users := make(map[int]*User)
-	//users := make([]*User, 0, u.FollowerCount)
 	_, err := session.ReadTransaction(func(tx neo4j.Transaction) (interface{}, error) {
 		//获取关注u的人
 		result, err := tx.Run("MATCH (a:Users{id:$ID})<-[:follow]-(b:Users) "+
@@ -397,16 +477,6 @@ func (u User) HasFollow(target *User) (bool, error) {
 	return n.(int64) > 0, nil
 }
 
-//记录转为user
-func (u User) record2User(record *neo4j.Record, key string) *User {
-	get, _ := record.Get(key)
-	node := get.(dbtype.Node)
-	return &User{
-		ID:   int(node.Props["id"].(int64)),
-		Name: node.Props["name"].(string),
-	}
-}
-
 // IsFollow 判断是否关注
 func IsFollow(src, target int) (bool, error) {
 	//同一个人时，返回真
@@ -440,4 +510,26 @@ func IsFollow(src, target int) (bool, error) {
 	}
 	n, _ := record.Get("COUNT(rel)")
 	return n.(int64) > 0, nil
+}
+
+//内部函数，记录转为user
+func (u User) record2User(record *neo4j.Record, key string) *User {
+	get, _ := record.Get(key)
+	node := get.(dbtype.Node)
+	return &User{
+		ID:   int(node.Props["id"].(int64)),
+		Name: node.Props["name"].(string),
+	}
+}
+
+//内部函数，记录转为video
+func (u User) record2Video(record *neo4j.Record, key string) *Video {
+	get, _ := record.Get(key)
+	node := get.(dbtype.Node)
+	return &Video{
+		ID:            int(node.Props["id"].(int64)),
+		UserID:        int(node.Props["userid"].(int64)),
+		CoverURL:      node.Props["coverUrl"].(string),
+		FavoriteCount: int(node.Props["favoriteCount"].(int64)),
+	}
 }

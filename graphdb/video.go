@@ -10,6 +10,7 @@ type Video struct {
 	UserID        int
 	CoverURL      string
 	FavoriteCount int
+	isFavorite    bool
 }
 
 func (v Video) Create() error {
@@ -21,8 +22,8 @@ func (v Video) Create() error {
 		}
 	}(session)
 	//
-	result, err := session.Run("CREATE (v:Vedios{id:$ID,userid:$UserID,coverUrl:$CoverURL,favoriteCount:$FavoriteCount}) "+
-		"RETURN u.id",
+	result, err := session.Run("CREATE (v:Videos{id:$ID,userid:$UserID,coverUrl:$CoverURL,favoriteCount:$FavoriteCount}) "+
+		"RETURN v.id",
 		map[string]interface{}{
 			"ID":            v.ID,
 			"UserID":        v.UserID,
@@ -37,7 +38,7 @@ func (v Video) Create() error {
 	if err != nil {
 		return err
 	}
-	id, _ := record.Get("u.id")
+	id, _ := record.Get("v.id")
 	util.Log().Info("创建用户图结点[ID:%v Name:%v]成功!\n", id)
 	return result.Err()
 }

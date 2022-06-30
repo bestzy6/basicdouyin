@@ -32,14 +32,14 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 		return &resp
 	}
 	//mysql异步更新
-	msg := &mq.G2mMessage{
+	msg := &mq.UserMessage{
 		User:   graph2model(&user),
 		ToUser: graph2model(&targetUser),
 	}
 	if req.ActionType == 1 {
-		msg.Num = mq.Follow
+		msg.OpNum = mq.Follow
 	} else {
-		msg.Num = mq.UnFollow
+		msg.OpNum = mq.UnFollow
 	}
 	mq.ToModelUserMQ <- msg
 	//

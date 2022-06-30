@@ -3,6 +3,7 @@ package service
 import (
 	"basictiktok/graphdb"
 	"basictiktok/model"
+	"basictiktok/mq"
 	"basictiktok/serializer"
 	"basictiktok/util"
 )
@@ -46,19 +47,29 @@ func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.L
 		err  error
 	)
 	user := graphdb.User{ID: userid}
-	vedio := graphdb.Video{ID: req.VideoId}
+	video := graphdb.Video{ID: req.VideoId}
 	if req.ActionType == 1 {
 		//点赞
-		err = user.Favorite(&vedio)
+		err = user.Favorite(&video)
 	} else {
 		//取消点赞
-		err = user.UnFavorite(&vedio)
+		err = user.UnFavorite(&video)
 	}
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = err.Error()
 	}
-
+	//mysql异步更新
+	msg := &mq.UserMessage{
+		ToVideo: videoG2M(&video),
+	}
+	if req.ActionType == 1 {
+		msg.OpNum = mq.Favorite
+	} else {
+		msg.OpNum = mq.UnFavorite
+	}
+	mq.ToModelUserMQ <- msg
+	//
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "点赞成功"
 	return &resp
@@ -66,49 +77,83 @@ func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.L
 
 // FavoriteListService 获取点赞列表
 func FavoriteListService(req *serializer.LikeListRequest, myUserId int) *serializer.LikeListResponse {
-	var resp serializer.LikeListResponse
-	userId := req.UserId
-	favoritePostDao := model.NewFavoritePostDaoInstance()
-	videoPost, err := favoritePostDao.QueryFavoritePostById(int64(userId))
+	var (
+		resp serializer.LikeListResponse
+		list map[int]*graphdb.Video
+		err  error
+	)
+	user := graphdb.User{ID: req.UserId}
+	reqUser := graphdb.User{ID: myUserId}
+	if user.ID == reqUser.ID {
+		list, err = user.MyFavoriteList()
+	} else {
+		list, err = user.FavoriteList(&reqUser)
+	}
 	if err != nil {
-		util.Log().Error("获取点赞列表失败:", err)
+		resp.StatusCode = serializer.UnknownError
+		resp.StatusMsg = err.Error()
+		resp.VideoList = nil
 	}
-	videoLs := favoritePostDao.GetVideoIdList(videoPost)
-	results, err1 := favoritePostDao.QueryPostByVedioId(videoLs) // 拿到所有相关的video 实体
-	if err1 != nil {
-		util.Log().Error("获取点赞列表失败:", err)
-	}
-	var videoTmpIndex []*serializer.Video
-
-	for _, result := range results {
-		userTmp, _ := model.QueryUserByID(result.UserID)
-		user := serializer.User{
-			FollowCount:   userTmp.FollowCount,
-			FollowerCount: userTmp.FollowerCount,
-			ID:            int64(userTmp.ID),
-			Name:          userTmp.UserName,
+	videoList := make([]*serializer.Video, 0, len(list))
+	for _, v := range list {
+		ansVideo := &serializer.Video{
+			ID:            int64(v.ID),
+			CoverURL:      v.CoverURL,
+			FavoriteCount: int64(v.FavoriteCount),
 		}
-		user.IsFollow, _ = graphdb.IsFollow(myUserId, userTmp.ID)
-		// 通过token获取你的userid，判断你是否关注这个视频作者
-		videoTmp := serializer.Video{
-			Author:        user,
-			CommentCount:  result.CommentCount,
-			CoverURL:      result.CoverURL,
-			FavoriteCount: result.FavoriteCount,
-			ID:            result.ID,
-			IsFavorite:    false,
-			PlayURL:       result.PlayURL,
-			Title:         result.Title,
-		}
-		videoTmpIndex = append(videoTmpIndex, &videoTmp)
+		videoList = append(videoList, ansVideo)
 	}
-
+	//
 	resp.StatusCode = serializer.OK
-	resp.StatusMsg = "查询点赞列表成功"
-	resp.VideoList = videoTmpIndex
+	resp.StatusMsg = "获取点赞列表成功"
+	resp.VideoList = videoList
 	return &resp
-
 }
+
+//func FavoriteListService(req *serializer.LikeListRequest, myUserId int) *serializer.LikeListResponse {
+//	var resp serializer.LikeListResponse
+//	userId := req.UserId
+//	favoritePostDao := model.NewFavoritePostDaoInstance()
+//	videoPost, err := favoritePostDao.QueryFavoritePostById(int64(userId))
+//	if err != nil {
+//		util.Log().Error("获取点赞列表失败:", err)
+//	}
+//	videoLs := favoritePostDao.GetVideoIdList(videoPost)
+//	results, err1 := favoritePostDao.QueryPostByVedioId(videoLs) // 拿到所有相关的video 实体
+//	if err1 != nil {
+//		util.Log().Error("获取点赞列表失败:", err)
+//	}
+//	var videoTmpIndex []*serializer.Video
+//
+//	for _, result := range results {
+//		userTmp, _ := model.QueryUserByID(result.UserID)
+//		user := serializer.User{
+//			FollowCount:   userTmp.FollowCount,
+//			FollowerCount: userTmp.FollowerCount,
+//			ID:            int64(userTmp.ID),
+//			Name:          userTmp.UserName,
+//		}
+//		user.IsFollow, _ = graphdb.IsFollow(myUserId, userTmp.ID)
+//		// 通过token获取你的userid，判断你是否关注这个视频作者
+//		videoTmp := serializer.Video{
+//			Author:        user,
+//			CommentCount:  result.CommentCount,
+//			CoverURL:      result.CoverURL,
+//			FavoriteCount: result.FavoriteCount,
+//			ID:            result.ID,
+//			IsFavorite:    false,
+//			PlayURL:       result.PlayURL,
+//			Title:         result.Title,
+//		}
+//		videoTmpIndex = append(videoTmpIndex, &videoTmp)
+//	}
+//
+//	resp.StatusCode = serializer.OK
+//	resp.StatusMsg = "查询点赞列表成功"
+//	resp.VideoList = videoTmpIndex
+//	return &resp
+//
+//}
 
 // IsFavorite 获取用户点赞的视频
 func IsFavorite(userId, videoId int64) bool {
@@ -124,4 +169,8 @@ func IsFavorite(userId, videoId int64) bool {
 		}
 	}
 	return false
+}
+
+func videoG2M(m *graphdb.Video) *model.Video {
+	return &model.Video{ID: int64(m.ID)}
 }

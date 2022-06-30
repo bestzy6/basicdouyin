@@ -29,28 +29,20 @@ func TestUser_Create(t *testing.T) {
 	ClearAll()
 	//CREATE (u:Users{id:100,name:'zy',follow:0,follower:0}) RETURN u
 	user1 := User{
-		ID:            100,
-		Name:          "zy",
-		FollowCount:   0,
-		FollowerCount: 0,
+		ID:   100,
+		Name: "zy",
 	}
 	user2 := User{
-		ID:            101,
-		Name:          "xj",
-		FollowCount:   0,
-		FollowerCount: 0,
+		ID:   101,
+		Name: "xj",
 	}
 	user3 := User{
-		ID:            102,
-		Name:          "sb",
-		FollowCount:   0,
-		FollowerCount: 0,
+		ID:   102,
+		Name: "sb",
 	}
 	user4 := User{
-		ID:            103,
-		Name:          "sb2",
-		FollowCount:   0,
-		FollowerCount: 0,
+		ID:   103,
+		Name: "sb2",
 	}
 	err := user1.Create()
 	if err != nil {

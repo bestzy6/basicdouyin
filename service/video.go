@@ -5,6 +5,7 @@ import (
 	"basictiktok/model"
 	"basictiktok/serializer"
 	"basictiktok/util"
+	"fmt"
 	"github.com/disintegration/imaging"
 	"io"
 	"mime/multipart"
@@ -176,7 +177,15 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 			StatusMsg:  "请求参数错误",
 		}
 	}
-
+	graphVideo := toGraphVideo(&video)
+	err = graphVideo.Create()
+	if err != nil {
+		fmt.Println(err)
+		return &serializer.ActionResponse{
+			StatusCode: serializer.ParamInvalid,
+			StatusMsg:  "请求参数错误",
+		}
+	}
 	return &serializer.ActionResponse{
 		StatusCode: serializer.OK,
 		StatusMsg:  "视频上传成功",
@@ -208,4 +217,13 @@ func saveUploadedFile(file *multipart.FileHeader, dst string) error {
 
 	_, err = io.Copy(out, src)
 	return err
+}
+
+func toGraphVideo(v *model.Video) *graphdb.Video {
+	return &graphdb.Video{
+		ID:            int(v.ID),
+		UserID:        int(v.UserID),
+		CoverURL:      v.CoverURL,
+		FavoriteCount: int(v.FavoriteCount),
+	}
 }
