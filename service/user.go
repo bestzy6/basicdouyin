@@ -1,6 +1,7 @@
 package service
 
 import (
+	"basictiktok/dao"
 	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
@@ -10,14 +11,16 @@ import (
 // RegisterService 用户注册
 func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterResponse {
 	var resp serializer.RegisterResponse
+	userIdGenerator, _ := util.NewGenerator(util.USERID)
 	user := model.User{
+		ID:       int(userIdGenerator.NextId()),
 		UserName: req.Username,
 		Password: util.PasswordWithMD5(req.Password),
 		Nickname: req.Nickname,
 	}
-
+	userDao := dao.NewUserDaoInstance()
 	// 通过注册信息新建一个用户
-	if err := user.Create(); err != nil {
+	if err := userDao.Create(&user); err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
 		return &resp
@@ -46,9 +49,9 @@ func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterRespon
 
 // LoginService 用户登录
 func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
-
 	var resp serializer.LoginResponse
-	user, err := model.QueryUserByName(req.UserName)
+	userDao := dao.NewUserDaoInstance()
+	user, err := userDao.QueryUserByName(req.UserName)
 	if err != nil {
 		resp.StatusCode = serializer.UserNotExisted
 		resp.StatusMsg = "用户名错误"
@@ -79,7 +82,8 @@ func LoginService(req *serializer.LoginRequest) *serializer.LoginResponse {
 // QueryUserInfoService 用户查询
 func QueryUserInfoService(req *serializer.UserInfoRequest, userid int) *serializer.UserInfoResponse {
 	var resp serializer.UserInfoResponse
-	user, err := model.QueryUserByID(req.UserId)
+	userDao := dao.NewUserDaoInstance()
+	user, err := userDao.QueryUserByID(req.UserId)
 	if err != nil {
 		resp.StatusCode = serializer.ParamInvalid
 		resp.StatusMsg = "用户id错误"

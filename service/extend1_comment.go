@@ -1,6 +1,7 @@
 package service
 
 import (
+	"basictiktok/dao"
 	"basictiktok/model"
 	"basictiktok/serializer"
 	"basictiktok/util"
@@ -10,25 +11,30 @@ import (
 // CommentPostService 在对应的视频下添加评论
 func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.CommentResponse {
 	var (
-		resp serializer.CommentResponse
-		err  error
+		resp    serializer.CommentResponse
+		err     error
+		postDao = dao.NewPostDaoInstance()
+		userDao = dao.NewUserDaoInstance()
 	)
+
 	if req.ActionType == 1 {
+		CommentIDGenerator, _ := util.NewGenerator(util.COMMENT)
 		//创建评论
 		post := model.Post{
+			Id:         CommentIDGenerator.NextId(),
 			VideoId:    int64(req.VideoId),
 			UserId:     int64(userId),
 			Content:    req.CommentText,
 			CreateTime: time.Now().Format("2006-01-02 15:04:05"), // 时间保持一致
 		}
-		err = post.Creat()
+		err = postDao.Creat(&post)
 		if err != nil {
 			resp.StatusCode = serializer.UnknownError
 			resp.StatusMsg = err.Error()
 			resp.Comment = serializer.Comment{}
 		}
 		//
-		user, _ := model.QueryUserByID(int64(userId))
+		user, _ := userDao.QueryUserByID(int64(userId))
 		userTmp := serializer.User{
 			FollowCount:   user.FollowCount,
 			FollowerCount: user.FollowerCount,
@@ -45,11 +51,7 @@ func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.
 		resp.Comment = comment
 	} else {
 		//删除评论
-		post := model.Post{
-			Id:      int64(req.CommentId),
-			VideoId: int64(req.VideoId),
-		}
-		err = post.Delete()
+		err = postDao.Delete(req.CommentId, req.VideoId)
 		if err != nil {
 			resp.StatusCode = serializer.UnknownError
 			resp.StatusMsg = err.Error()
@@ -61,11 +63,15 @@ func CommentPostService(req *serializer.CommentRequest, userId int) *serializer.
 	return &resp
 }
 
-func CommentListService(req *serializer.CommentListRequest, userId int) *serializer.CommListResponse {
-	var resp serializer.CommListResponse
+func CommentListService(req *serializer.CommentListRequest) *serializer.CommListResponse {
+	var (
+		resp    serializer.CommListResponse
+		postDao = dao.NewPostDaoInstance()
+		userDao = dao.NewUserDaoInstance()
+	)
 	videoId := req.VideoId
 	//查评论表
-	commentList, err := model.NewPostDaoInstance().QueryPostByVideoId(int64(videoId))
+	commentList, err := postDao.QueryPostByVideoId(int64(videoId))
 	if err != nil {
 		util.Log().Error("查询失败:", err)
 	}
@@ -73,7 +79,7 @@ func CommentListService(req *serializer.CommentListRequest, userId int) *seriali
 	ansList := make([]*serializer.Comment, 0, len(commentList))
 	for i := 0; i < len(commentList); i++ {
 		//查用户表
-		user, err := model.QueryUserByID(commentList[i].UserId)
+		user, err := userDao.QueryUserByID(commentList[i].UserId)
 		if err != nil {
 			resp.StatusCode = serializer.OK
 			resp.StatusMsg = err.Error()

@@ -1,6 +1,9 @@
 package mq
 
-import "basictiktok/model"
+import (
+	"basictiktok/dao"
+	"basictiktok/model"
+)
 
 //通道的缓存最大值
 const maxMessageNum = 100
@@ -31,20 +34,22 @@ func InitMQ() {
 }
 
 func listenToModelUserMQ() {
-	var msg *UserMessage
+	var (
+		msg      *UserMessage
+		userDao  = dao.NewUserDaoInstance()
+		videoDao = dao.NewVideoDaoInstance()
+	)
 	for {
 		msg = <-ToModelUserMQ
 		user, toUser, video := msg.User, msg.ToUser, msg.ToVideo
 		switch msg.OpNum {
 		case Follow:
-			user.Follow(toUser)
+			userDao.Follow(user.ID, toUser.ID)
 		case UnFollow:
-			user.UnFollow(toUser)
+			userDao.UnFollow(user.ID, toUser.ID)
 		case Favorite:
-			videoDao := model.NewVideoDaoInstance()
 			videoDao.AddFavorite(video.ID)
 		case UnFavorite:
-			videoDao := model.NewVideoDaoInstance()
 			videoDao.DeleteFavorite(video.ID)
 		}
 	}

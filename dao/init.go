@@ -1,6 +1,7 @@
-package model
+package dao
 
 import (
+	"basictiktok/model"
 	"basictiktok/util"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -50,8 +51,7 @@ func Database(connString string) {
 
 func migration() {
 	// 自动迁移模式
-	_ = DB.AutoMigrate(&User{})
-	_ = DB.AutoMigrate(&Video{})
-	_ = DB.AutoMigrate(&Post{})
-	//_ = DB.AutoMigrate(&VideoCL{})
+	_ = DB.AutoMigrate(&model.User{})
+	_ = DB.AutoMigrate(&model.Video{})
+	_ = DB.AutoMigrate(&model.Post{})
 }

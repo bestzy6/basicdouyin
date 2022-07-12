@@ -1,6 +1,7 @@
 package service
 
 import (
+	"basictiktok/dao"
 	"basictiktok/graphdb"
 	"basictiktok/model"
 	"basictiktok/serializer"
@@ -21,7 +22,11 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 	var user model.User
 	user.ID = userid
 	// 找出请求时间之前的30条视频信息返回
-	videos, err := model.FindVideoBeforeTime(req.LatestTime)
+	var (
+		videoDao = dao.NewVideoDaoInstance()
+		userDao  = dao.NewUserDaoInstance()
+	)
+	videos, err := videoDao.FindVideoBeforeTime(req.LatestTime)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -35,7 +40,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 	videoList := make([]serializer.Video, 0, 30)
 	// 将视频信息与上传作者信息进行绑定返回
 	for k := range videos {
-		upInfo, err := model.QueryUserByID(videos[k].UserID)
+		upInfo, err := userDao.QueryUserByID(videos[k].UserID)
 		if err != nil {
 			resp.StatusCode = serializer.UnknownError
 			resp.StatusMsg = "未知错误"
@@ -83,7 +88,11 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 
 func ListVideosService(req *serializer.ListRequest, userid int) *serializer.ListResponse {
 	var resp serializer.ListResponse
-	user, err := model.QueryUserByID(req.UserId)
+	var (
+		videoDao = dao.NewVideoDaoInstance()
+		userDao  = dao.NewUserDaoInstance()
+	)
+	user, err := userDao.QueryUserByID(req.UserId)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -102,7 +111,7 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 		return &resp
 	}
 
-	videos, err := model.QueryVideoListByUserID(user.ID)
+	videos, err := videoDao.QueryVideoListByUserID(user.ID)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -161,7 +170,9 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 			StatusMsg:  "保存封面错误！",
 		}
 	}
+	videoIDGenerator, _ := util.NewGenerator(util.VIDEOID)
 	video := model.Video{
+		ID:            videoIDGenerator.NextId(),
 		UserID:        int64(userid),
 		CoverURL:      "http://" + host + "/static/img/" + imgFileName,
 		CommentCount:  0,
@@ -170,7 +181,8 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 		Title:         req.Title,
 		AddTime:       time.Now().Unix(),
 	}
-	err = video.Create()
+	videoDao := dao.NewVideoDaoInstance()
+	err = videoDao.Create(&video)
 	if err != nil {
 		return &serializer.ActionResponse{
 			StatusCode: serializer.ParamInvalid,

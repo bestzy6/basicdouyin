@@ -41,8 +41,6 @@ func CommentList(c *gin.Context) {
 		})
 		return
 	}
-	reqUserId, _ := c.Get("userid")
-	i := reqUserId.(int)
-	resp := service.CommentListService(&req, i)
+	resp := service.CommentListService(&req)
 	c.JSON(http.StatusOK, resp)
 }
