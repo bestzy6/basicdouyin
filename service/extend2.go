@@ -14,16 +14,17 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
 	targetUser := graphdb.User{ID: req.ToUserId}
 	//判断user和targetuser是否为同一人
-	if user.ID == targetUser.ID {
+	if req.ReqUserId == req.ToUserId {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "不能关注或取消关注自己！"
 		return &resp
 	}
+	userGraphDao := graphdb.NewUserGraphDao()
 	var err error
 	if req.ActionType == 1 {
-		err = user.Follow(&targetUser)
+		err = userGraphDao.Follow(req.ReqUserId, req.ToUserId)
 	} else {
-		err = user.UnFollow(&targetUser)
+		err = userGraphDao.UnFollow(req.ReqUserId, req.ToUserId)
 	}
 	if err != nil {
 		util.Log().Error("neo4j关注错误\n", err)
@@ -51,17 +52,15 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 // FollowersService 获取关注列表服务
 func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListResponse {
 	var resp serializer.FollowListResponse
-	reqUser := graphdb.User{ID: req.ReqUserId} //需要根据token修改
-	user := graphdb.User{ID: req.UserId}
-	//
 	var (
-		users map[int]*graphdb.User
-		err   error
+		users        map[int]*graphdb.User
+		err          error
+		userGraphDao = graphdb.NewUserGraphDao()
 	)
-	if reqUser.ID == user.ID {
-		users, err = user.MyFollowers()
+	if req.ReqUserId == req.UserId {
+		users, err = userGraphDao.MyFollowers(req.ReqUserId)
 	} else {
-		users, err = user.Followers(&reqUser)
+		users, err = userGraphDao.Followers(req.UserId, req.ReqUserId)
 	}
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
@@ -88,9 +87,8 @@ func FollowersService(req *serializer.FollowListRequest) *serializer.FollowListR
 // FolloweesService 获取粉丝列表服务
 func FolloweesService(req *serializer.FolloweesRequest) *serializer.FolloweesResponse {
 	var resp serializer.FolloweesResponse
-	reqUser := graphdb.User{ID: req.ReqUserId} //需要根据token修改
-	user := graphdb.User{ID: req.UserId}
-	users, err := user.Followees(&reqUser)
+	userGraphDao := graphdb.NewUserGraphDao()
+	users, err := userGraphDao.Followees(req.UserId, req.ReqUserId)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"

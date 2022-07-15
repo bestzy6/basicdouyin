@@ -23,8 +23,9 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 	user.ID = userid
 	// 找出请求时间之前的30条视频信息返回
 	var (
-		videoDao = dao.NewVideoDaoInstance()
-		userDao  = dao.NewUserDaoInstance()
+		videoDao     = dao.NewVideoDaoInstance()
+		userDao      = dao.NewUserDaoInstance()
+		userGraphDao = graphdb.NewUserGraphDao()
 	)
 	videos, err := videoDao.FindVideoBeforeTime(req.LatestTime)
 	if err != nil {
@@ -55,7 +56,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 		var videoRes serializer.Video
 		if user.ID != 0 {
 			// 判断当前登录用户是否关注当前视频作者
-			isFollow, err := graphdb.IsFollow(user.ID, int(uper.ID))
+			isFollow, err := userGraphDao.HasFollow(user.ID, int(uper.ID))
 			if err != nil {
 				resp.StatusCode = serializer.UnknownError
 				resp.StatusMsg = "未知错误"
@@ -63,7 +64,7 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 			}
 			uper.IsFollow = isFollow
 			// 判断是否点赞
-			videoRes.IsFavorite = graphdb.IsFavorite(user.ID, int(videos[k].ID))
+			videoRes.IsFavorite = userGraphDao.IsFavorite(user.ID, int(videos[k].ID))
 		} else {
 			videoRes.IsFavorite = false
 		}
@@ -89,8 +90,9 @@ func FindVideoBeforeTimeService(req *serializer.FeedRequest, userid int) *serial
 func ListVideosService(req *serializer.ListRequest, userid int) *serializer.ListResponse {
 	var resp serializer.ListResponse
 	var (
-		videoDao = dao.NewVideoDaoInstance()
-		userDao  = dao.NewUserDaoInstance()
+		videoDao     = dao.NewVideoDaoInstance()
+		userDao      = dao.NewUserDaoInstance()
+		userGraphDao = graphdb.NewUserGraphDao()
 	)
 	user, err := userDao.QueryUserByID(req.UserId)
 	if err != nil {
@@ -104,7 +106,7 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 		FollowCount:   user.FollowCount,
 		FollowerCount: user.FollowerCount,
 	}
-	userRes.IsFollow, err = graphdb.IsFollow(userid, user.ID)
+	userRes.IsFollow, err = userGraphDao.HasFollow(userid, user.ID)
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = "未知错误"
@@ -121,7 +123,7 @@ func ListVideosService(req *serializer.ListRequest, userid int) *serializer.List
 	for k := range videos {
 		video := serializer.Video{
 			Author:        userRes,
-			IsFavorite:    graphdb.IsFavorite(user.ID, int(videos[k].ID)),
+			IsFavorite:    userGraphDao.IsFavorite(user.ID, int(videos[k].ID)),
 			Title:         videos[k].Title,
 			PlayURL:       videos[k].PlayURL,
 			CoverURL:      videos[k].CoverURL,
@@ -190,7 +192,8 @@ func ActionService(req *serializer.ActionRequest, userid int, host string) *seri
 		}
 	}
 	graphVideo := toGraphVideo(&video)
-	err = graphVideo.Create()
+	videoGraphDao := graphdb.NewVideoGraphDao()
+	err = videoGraphDao.Create(graphVideo)
 	if err != nil {
 		fmt.Println(err)
 		return &serializer.ActionResponse{

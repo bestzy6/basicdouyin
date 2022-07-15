@@ -34,8 +34,9 @@ func RegisterService(req *serializer.RegisterRequest) *serializer.RegisterRespon
 		return &resp
 	}
 	//添加信息至图数据库
+	userGraphDao := graphdb.NewUserGraphDao()
 	graphUser := model2graph(&user)
-	err = graphUser.Create()
+	err = userGraphDao.Create(graphUser)
 	if err != nil {
 		util.Log().Error("创建图用户失败！", err)
 	}
@@ -84,6 +85,7 @@ func QueryUserInfoService(req *serializer.UserInfoRequest, userid int) *serializ
 	var resp serializer.UserInfoResponse
 	userDao := dao.NewUserDaoInstance()
 	user, err := userDao.QueryUserByID(req.UserId)
+	userGraphDao := graphdb.NewUserGraphDao()
 	if err != nil {
 		resp.StatusCode = serializer.ParamInvalid
 		resp.StatusMsg = "用户id错误"
@@ -97,7 +99,7 @@ func QueryUserInfoService(req *serializer.UserInfoRequest, userid int) *serializ
 	resp.User.FollowCount = user.FollowCount
 	resp.User.FollowerCount = user.FollowerCount
 	// 这个需要查询用户关注信息
-	resp.User.IsFollow, _ = graphdb.IsFollow(userid, int(req.UserId))
+	resp.User.IsFollow, _ = userGraphDao.HasFollow(userid, int(req.UserId))
 	return &resp
 }
 
