@@ -6,13 +6,12 @@ import (
 	"basictiktok/mq"
 	"basictiktok/serializer"
 	"basictiktok/util"
+	"strconv"
 )
 
 // FollowService 关注服务（还需要添加对数据库的操作）
 func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 	var resp serializer.FollowResponse
-	user := graphdb.User{ID: req.ReqUserId} //需要根据token修改
-	targetUser := graphdb.User{ID: req.ToUserId}
 	//判断user和targetuser是否为同一人
 	if req.ReqUserId == req.ToUserId {
 		resp.StatusCode = serializer.UnknownError
@@ -33,16 +32,8 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 		return &resp
 	}
 	//mysql异步更新
-	msg := &mq.UserMessage{
-		User:   graph2model(&user),
-		ToUser: graph2model(&targetUser),
-	}
-	if req.ActionType == 1 {
-		msg.OpNum = mq.Follow
-	} else {
-		msg.OpNum = mq.UnFollow
-	}
-	mq.ToModelUserMQ <- msg
+	msg := strconv.Itoa(req.ReqUserId) + "_" + strconv.Itoa(req.ToUserId) + "_" + strconv.Itoa(req.ActionType)
+	mq.FollowProducerMsg <- msg
 	//
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "ok"

@@ -1,10 +1,9 @@
 package middleware
 
 import (
-	"regexp"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"regexp"
 )
 
 // Cors 跨域配置

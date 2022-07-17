@@ -5,6 +5,7 @@ import (
 	"basictiktok/model"
 	"basictiktok/mq"
 	"basictiktok/serializer"
+	"strconv"
 )
 
 func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.LikesResponse {
@@ -12,7 +13,6 @@ func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.L
 		resp serializer.LikesResponse
 		err  error
 	)
-	video := graphdb.Video{ID: req.VideoId}
 	userGraphDao := graphdb.NewUserGraphDao()
 	if req.ActionType == 1 {
 		//点赞
@@ -26,15 +26,8 @@ func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.L
 		resp.StatusMsg = err.Error()
 	}
 	//mysql异步更新
-	msg := &mq.UserMessage{
-		ToVideo: videoG2M(&video),
-	}
-	if req.ActionType == 1 {
-		msg.OpNum = mq.Favorite
-	} else {
-		msg.OpNum = mq.UnFavorite
-	}
-	mq.ToModelUserMQ <- msg
+	msg := strconv.Itoa(userid) + "_" + strconv.Itoa(req.VideoId) + "_" + strconv.Itoa(req.ActionType)
+	mq.FavoriteProducerMsg <- msg
 	//
 	resp.StatusCode = serializer.OK
 	resp.StatusMsg = "点赞成功"

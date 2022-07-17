@@ -7,6 +7,8 @@ import (
 	"basictiktok/mq"
 	"basictiktok/util"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -29,5 +31,48 @@ func Init() {
 	graphdb.Neo4j()
 
 	//消息队列
-	mq.InitMQ()
+	mq.InitKafka()
+
+	//监控消息队列
+	go listenFollowMQ(mq.FollowConsumerMsg)
+	go listenFavoriteMQ(mq.FavoriteConsumerMsg)
+}
+
+func listenFollowMQ(msg <-chan string) {
+	userDaoInstance := dao.NewUserDaoInstance()
+	for {
+		str := <-msg
+		split := strings.Split(str, "_")
+		userID, _ := strconv.Atoi(split[0])
+		targetUserId, _ := strconv.Atoi(split[1])
+		actionType, _ := strconv.Atoi(split[2])
+		var err error
+		if actionType == 1 {
+			err = userDaoInstance.Follow(userID, targetUserId)
+		} else {
+			err = userDaoInstance.UnFollow(userID, targetUserId)
+		}
+		if err != nil {
+			util.Log().Error("MQ err:", err)
+		}
+	}
+}
+
+func listenFavoriteMQ(msg <-chan string) {
+	videoDaoInstance := dao.NewVideoDaoInstance()
+	for {
+		str := <-msg
+		split := strings.Split(str, "_")
+		videoId, _ := strconv.Atoi(split[1])
+		actionType, _ := strconv.Atoi(split[2])
+		var err error
+		if actionType == 1 {
+			err = videoDaoInstance.AddFavorite(int64(videoId))
+		} else {
+			err = videoDaoInstance.DeleteFavorite(int64(videoId))
+		}
+		if err != nil {
+			util.Log().Error("MQ err:", err)
+		}
+	}
 }
