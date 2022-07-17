@@ -5,7 +5,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"log"
 	"os"
-	"time"
 )
 
 var (
@@ -13,13 +12,14 @@ var (
 	FollowProducerMsg   chan string
 	FavoriteConsumerMsg chan string
 	FavoriteProducerMsg chan string
+	MaxLength           = 20
 )
 
 func init() {
 	FollowConsumerMsg = make(chan string)
-	FollowProducerMsg = make(chan string)
+	FollowProducerMsg = make(chan string, MaxLength)
 	FavoriteConsumerMsg = make(chan string)
-	FavoriteProducerMsg = make(chan string)
+	FavoriteProducerMsg = make(chan string, MaxLength)
 }
 
 //follow and favorite，总共需要两个topic，partition都只能是一个
@@ -32,14 +32,6 @@ func InitKafka() {
 
 func getKafkaConn(topic string, part int) (*kafka.Conn, error) {
 	conn, err := kafka.DialLeader(context.Background(), "tcp", os.Getenv("KAFKA_HOST"), topic, part)
-	if err != nil {
-		return nil, err
-	}
-	err = conn.SetWriteDeadline(time.Now())
-	if err != nil {
-		return nil, err
-	}
-	err = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 	if err != nil {
 		return nil, err
 	}
