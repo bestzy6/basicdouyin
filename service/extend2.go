@@ -7,7 +7,20 @@ import (
 	"basictiktok/serializer"
 	"basictiktok/util"
 	"strconv"
+	"sync"
 )
+
+var (
+	idGenerator *util.Generator
+	once        sync.Once
+)
+
+func getIdGenerator() *util.Generator {
+	once.Do(func() {
+		idGenerator, _ = util.NewGenerator(util.FollowProducer)
+	})
+	return idGenerator
+}
 
 // FollowService 关注服务（还需要添加对数据库的操作）
 func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
@@ -31,8 +44,11 @@ func FollowService(req *serializer.FollowRequest) *serializer.FollowResponse {
 		resp.StatusMsg = "未知错误"
 		return &resp
 	}
+	//生成雪花ID，用于保证幂等性
+	generator := getIdGenerator()
+	id := generator.NextId()
 	//mysql异步更新
-	msg := strconv.Itoa(req.ReqUserId) + "_" + strconv.Itoa(req.ToUserId) + "_" + strconv.Itoa(req.ActionType)
+	msg := strconv.FormatInt(id, 10) + strconv.Itoa(req.ReqUserId) + "_" + strconv.Itoa(req.ToUserId) + "_" + strconv.Itoa(req.ActionType)
 	mq.FollowProducerMsg <- msg
 	//
 	resp.StatusCode = serializer.OK

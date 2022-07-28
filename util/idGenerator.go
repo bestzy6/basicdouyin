@@ -10,6 +10,8 @@ const (
 	USERID int64 = iota
 	VIDEOID
 	COMMENT
+	FollowProducer
+	FavoriteProducer
 )
 
 const (

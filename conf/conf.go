@@ -34,45 +34,59 @@ func Init() {
 	mq.InitKafka()
 
 	//监控消息队列
-	go listenFollowMQ(mq.FollowConsumerMsg)
-	go listenFavoriteMQ(mq.FavoriteConsumerMsg)
+	go listenFollowMQ(mq.FollowConsumerMsg, mq.FollowNotifyMsg)
+	go listenFavoriteMQ(mq.FavoriteConsumerMsg, mq.FavoriteNotifyMsg)
 }
 
-func listenFollowMQ(msg <-chan string) {
+func listenFollowMQ(msg <-chan string, notify chan<- struct{}) {
 	userDaoInstance := dao.NewUserDaoInstance()
+	offsetId := 0
 	for {
 		str := <-msg
 		split := strings.Split(str, "_")
-		userID, _ := strconv.Atoi(split[0])
-		targetUserId, _ := strconv.Atoi(split[1])
-		actionType, _ := strconv.Atoi(split[2])
-		var err error
-		if actionType == 1 {
-			err = userDaoInstance.Follow(userID, targetUserId)
-		} else {
-			err = userDaoInstance.UnFollow(userID, targetUserId)
+		snowId, _ := strconv.Atoi(split[0])
+		if snowId > offsetId {
+			userID, _ := strconv.Atoi(split[1])
+			targetUserId, _ := strconv.Atoi(split[2])
+			actionType, _ := strconv.Atoi(split[3])
+			var err error
+			if actionType == 1 {
+				err = userDaoInstance.Follow(userID, targetUserId)
+			} else {
+				err = userDaoInstance.UnFollow(userID, targetUserId)
+			}
+			if err != nil {
+				util.Log().Error("MQ err:", err)
+			}
+			offsetId = snowId
 		}
-		if err != nil {
-			util.Log().Error("MQ err:", err)
-		}
+		//表示已经执行完成
+		notify <- struct{}{}
 	}
 }
 
-func listenFavoriteMQ(msg <-chan string) {
+func listenFavoriteMQ(msg <-chan string, notify chan<- struct{}) {
 	videoDaoInstance := dao.NewVideoDaoInstance()
+	offsetId := 0
 	for {
 		str := <-msg
 		split := strings.Split(str, "_")
-		videoId, _ := strconv.Atoi(split[1])
-		actionType, _ := strconv.Atoi(split[2])
-		var err error
-		if actionType == 1 {
-			err = videoDaoInstance.AddFavorite(int64(videoId))
-		} else {
-			err = videoDaoInstance.DeleteFavorite(int64(videoId))
+		currentId, _ := strconv.Atoi(split[0])
+		if currentId > offsetId {
+			videoId, _ := strconv.Atoi(split[1])
+			actionType, _ := strconv.Atoi(split[2])
+			var err error
+			if actionType == 1 {
+				err = videoDaoInstance.AddFavorite(int64(videoId))
+			} else {
+				err = videoDaoInstance.DeleteFavorite(int64(videoId))
+			}
+			if err != nil {
+				util.Log().Error("MQ err:", err)
+			}
+			offsetId = currentId
 		}
-		if err != nil {
-			util.Log().Error("MQ err:", err)
-		}
+		//表示已经执行完成
+		notify <- struct{}{}
 	}
 }

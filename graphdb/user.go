@@ -3,6 +3,7 @@ package graphdb
 import (
 	"basictiktok/util"
 	"errors"
+	"fmt"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j/dbtype"
 	"sync"
@@ -85,6 +86,10 @@ func (u *UserGraphDao) Favorite(userId, videoId int) error {
 		if err != nil {
 			tx.Rollback()
 			return nil, err
+		}
+		n, b := record.Get("COUNT(rel)")
+		if b {
+			fmt.Println(n)
 		}
 		if n, _ := record.Get("COUNT(rel)"); n.(int64) > 0 {
 			tx.Rollback()

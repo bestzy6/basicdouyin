@@ -5,8 +5,22 @@ import (
 	"basictiktok/model"
 	"basictiktok/mq"
 	"basictiktok/serializer"
+	"basictiktok/util"
 	"strconv"
+	"sync"
 )
+
+var (
+	idFavoriteGenerator *util.Generator
+	onceFavorite        sync.Once
+)
+
+func getFavoriteIdGenerator() *util.Generator {
+	onceFavorite.Do(func() {
+		idFavoriteGenerator, _ = util.NewGenerator(util.FavoriteProducer)
+	})
+	return idFavoriteGenerator
+}
 
 func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.LikesResponse {
 	var (
@@ -24,9 +38,13 @@ func FavoritePostService(req *serializer.LikesRequest, userid int) *serializer.L
 	if err != nil {
 		resp.StatusCode = serializer.UnknownError
 		resp.StatusMsg = err.Error()
+		return &resp
 	}
+	//获取雪花id
+	generator := getFavoriteIdGenerator()
+	id := generator.NextId()
 	//mysql异步更新
-	msg := strconv.Itoa(userid) + "_" + strconv.Itoa(req.VideoId) + "_" + strconv.Itoa(req.ActionType)
+	msg := strconv.FormatInt(id, 10) + "_" + strconv.Itoa(req.VideoId) + "_" + strconv.Itoa(req.ActionType)
 	mq.FavoriteProducerMsg <- msg
 	//
 	resp.StatusCode = serializer.OK
